@@ -20,13 +20,27 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 function getPublicUrl(req) {
   if (process.env.RAILWAY_PUBLIC_DOMAIN) return 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN;
   if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL;
-  return null; // local — client will build from lanIp + port
+  return null;
 }
 
 const users = new Map();
 const textChannels = new Map();
 const voiceChannels = new Map();
 let hostId = null;
+
+// Music bot state
+const musicState = {
+  playing: false,
+  videoId: null,
+  search: null,
+  startedAt: null,
+  pausedOffset: 0,
+  queue: []
+};
+
+function broadcastMusicState() {
+  broadcastAll({ type: 'music-state', state: Object.assign({}, musicState) });
+}
 
 ['general', 'random', 'announcements'].forEach(name => textChannels.set(name, []));
 ['General Voice', 'Gaming', 'Music'].forEach(name => voiceChannels.set(name, new Set()));
@@ -99,7 +113,6 @@ wss.on('connection', (ws) => {
       broadcastAll({ type: 'user-update', state: getState() });
 
     } else if (msg.type === 'set-avatar') {
-      // avatar is a small data: URL (resized client-side). Cap length to avoid abuse.
       const a = typeof msg.avatar === 'string' ? msg.avatar : null;
       user.avatar = (a && a.length < 200000) ? a : null;
       broadcastAll({ type: 'user-update', state: getState() });
@@ -119,6 +132,79 @@ wss.on('connection', (ws) => {
       hist.push(message);
       if (hist.length > 200) hist.shift();
       broadcastAll({ type: 'text-message', message });
+
+    } else if (msg.type === 'file-message') {
+      const ch = msg.channel;
+      if (!textChannels.has(ch)) return;
+      const MAX_B64 = 8 * 1024 * 1024 * 1.4;
+      if (!msg.data || typeof msg.data !== 'string' || msg.data.length > MAX_B64) return;
+      const fileMsg = {
+        id: Math.random().toString(36).substr(2, 9),
+        sender: user.nickname || 'Anonymous',
+        senderId: user.id,
+        channel: ch,
+        timestamp: Date.now(),
+        filename: (msg.filename || 'file').substring(0, 255),
+        mimetype: (msg.mimetype || 'application/octet-stream').substring(0, 128),
+        size: msg.size || 0,
+        fileData: msg.data
+      };
+      broadcastAll({ type: 'file-message', message: fileMsg });
+
+    } else if (msg.type === 'music-command') {
+      switch (msg.command) {
+        case 'play':
+          if (msg.videoId) { musicState.videoId = msg.videoId; musicState.search = null; }
+          else if (msg.search) { musicState.search = msg.search; musicState.videoId = null; }
+          else break;
+          musicState.playing = true;
+          musicState.startedAt = Date.now();
+          musicState.pausedOffset = 0;
+          break;
+        case 'pause':
+          if (musicState.playing && musicState.startedAt !== null) {
+            musicState.pausedOffset += (Date.now() - musicState.startedAt) / 1000;
+            musicState.playing = false;
+            musicState.startedAt = null;
+          }
+          break;
+        case 'resume':
+          if (!musicState.playing && (musicState.videoId || musicState.search)) {
+            musicState.playing = true;
+            musicState.startedAt = Date.now();
+          }
+          break;
+        case 'stop':
+          musicState.playing = false;
+          musicState.videoId = null;
+          musicState.search = null;
+          musicState.startedAt = null;
+          musicState.pausedOffset = 0;
+          musicState.queue = [];
+          break;
+        case 'skip':
+          if (musicState.queue.length > 0) {
+            const nxt = musicState.queue.shift();
+            musicState.videoId = nxt.videoId || null;
+            musicState.search = nxt.search || null;
+            musicState.playing = true;
+            musicState.startedAt = Date.now();
+            musicState.pausedOffset = 0;
+          } else {
+            musicState.playing = false;
+            musicState.videoId = null;
+            musicState.search = null;
+            musicState.startedAt = null;
+            musicState.pausedOffset = 0;
+          }
+          break;
+        case 'queue':
+          if (msg.videoId || msg.search) {
+            musicState.queue.push({ videoId: msg.videoId || null, search: msg.search || null });
+          }
+          break;
+      }
+      broadcastMusicState();
 
     } else if (msg.type === 'create-text-channel') {
       const name = (msg.name || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').substring(0, 32);
@@ -179,7 +265,7 @@ wss.on('connection', (ws) => {
 
     } else if (msg.type === 'rtc-offer' || msg.type === 'rtc-answer' || msg.type === 'rtc-ice') {
       const entry = Array.from(users.entries()).find(([s, u]) => u.id === msg.target);
-      if (entry) sendTo(entry[0], { ...msg, from: user.id });
+      if (entry) sendTo(entry[0], Object.assign({}, msg, { from: user.id }));
     }
   });
 

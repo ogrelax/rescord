@@ -141,9 +141,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .msg-author:hover{text-decoration:underline}
 .msg-time{font-size:11px;color:var(--text-muted)}
 .msg-text{font-size:15px;line-height:1.375;word-break:break-word;color:var(--text-primary)}
+.msg-sys{font-size:13px;color:var(--text-muted);font-style:italic;padding:4px 8px}
 #inputArea{padding:0 16px 24px;flex-shrink:0}
-.input-wrap{background:var(--bg-active);border-radius:8px;display:flex;align-items:center;padding:0 16px;gap:8px}
-#msgInput{flex:1;background:none;border:none;color:var(--text-primary);font-size:15px;padding:11px 0;outline:none}
+.input-wrap{background:var(--bg-active);border-radius:8px;display:flex;align-items:center;padding:0 8px 0 4px;gap:4px}
+#msgInput{flex:1;background:none;border:none;color:var(--text-primary);font-size:15px;padding:11px 8px;outline:none}
 #msgInput::placeholder{color:var(--text-muted)}
 .send-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:4px;line-height:1}
 .send-btn:hover{color:var(--text-primary)}
@@ -163,7 +164,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .mem-btn.on{background:var(--red);color:#fff}
 
 /* Voice view */
-#voiceView{flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#voiceView{flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 #voiceView.active{display:flex}
 .voice-ch-name{font-size:28px;font-weight:700}
 .voice-participants{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
@@ -179,7 +180,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 ::-webkit-scrollbar-thumb{background:var(--bg-tertiary);border-radius:3px}
 audio{display:none}
 
-/* ===== Theme palettes (default :root above = Mint) ===== */
+/* ===== Theme palettes ===== */
 html[data-theme="graphite"]{
   --bg-primary:#1e1f22; --bg-secondary:#2b2d31; --bg-tertiary:#313338; --bg-hover:#35373c; --bg-active:#404249;
   --text-primary:#f2f3f5; --text-muted:#b5bac1; --text-channel:#949ba4;
@@ -223,6 +224,24 @@ html[data-theme="light"]{
 #ctxMenu input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:10px}
 #ctxMenu .ctx-btn{width:100%;padding:7px;border:none;border-radius:4px;background:var(--bg-active);color:var(--text-primary);cursor:pointer;font-size:13px}
 #ctxMenu .ctx-btn:hover{background:var(--bg-hover)}
+
+/* File sharing */
+.attach-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:4px 8px;line-height:1;transition:color .15s}
+.attach-btn:hover{color:var(--accent)}
+.msg-file{display:inline-flex;align-items:center;gap:8px;background:var(--bg-tertiary);border-radius:6px;padding:8px 12px;margin-top:4px;text-decoration:none;color:var(--text-primary);font-size:13px;max-width:340px}
+.msg-file:hover{background:var(--bg-hover)}
+.msg-img{max-width:380px;max-height:280px;border-radius:6px;display:block;margin-top:6px;cursor:pointer}
+
+/* Music player */
+#musicPlayer{background:var(--bg-secondary);border-radius:8px;padding:10px 14px;margin-bottom:4px;display:flex;align-items:center;gap:10px;max-width:900px;width:100%}
+.music-thumb{width:54px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0;background:var(--bg-active)}
+.music-info{flex:1;min-width:0}
+.music-title{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary)}
+.music-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.music-ctl{display:flex;gap:4px;flex-shrink:0}
+.music-btn{background:var(--bg-active);border:none;color:var(--text-primary);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;transition:background .15s}
+.music-btn:hover{background:var(--bg-hover)}
+#ytPlayerWrap{width:160px;height:90px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#000}
 </style>
 </head>
 <body>
@@ -264,27 +283,25 @@ html[data-theme="light"]{
   <div class="settings-panel">
     <div class="settings-nav">
       <div class="settings-nav-cat">Settings</div>
-      <div class="settings-nav-item active" id="nav-audio" onclick="showSection('audio')">🎙 Voice & Audio</div>
-      <div class="settings-nav-item" id="nav-profile" onclick="showSection('profile')">🙂 Profile</div>
-      <div class="settings-nav-item" id="nav-appearance" onclick="showSection('appearance')">🎨 Appearance</div>
-      <div class="settings-nav-item" id="nav-invite" onclick="showSection('invite')">🔗 Invite</div>
-      <div class="settings-nav-item" id="nav-users" onclick="showSection('users')">👥 Manage Users</div>
+      <div class="settings-nav-item active" id="nav-audio" onclick="showSection('audio')">&#127897; Voice &amp; Audio</div>
+      <div class="settings-nav-item" id="nav-profile" onclick="showSection('profile')">&#128578; Profile</div>
+      <div class="settings-nav-item" id="nav-appearance" onclick="showSection('appearance')">&#127912; Appearance</div>
+      <div class="settings-nav-item" id="nav-invite" onclick="showSection('invite')">&#128279; Invite</div>
+      <div class="settings-nav-item" id="nav-users" onclick="showSection('users')">&#128101; Manage Users</div>
       <div class="settings-nav-divider"></div>
-      <div class="settings-nav-item danger" onclick="closeModal('settingsModal')">✕ Close</div>
+      <div class="settings-nav-item danger" onclick="closeModal('settingsModal')">&#10005; Close</div>
     </div>
     <div class="settings-content">
 
       <!-- Voice & Audio -->
       <div class="settings-section active" id="section-audio">
-        <h2>Voice & Audio</h2>
-
+        <h2>Voice &amp; Audio</h2>
         <div class="settings-group">
           <h3>Mic Level</h3>
           <div class="mic-meter-wrap"><div id="micMeterFill" class="mic-meter-fill"></div></div>
-          <button id="micTestBtn" class="mic-test-btn" onclick="toggleMicTest()">🎤 Test Mic (hear yourself)</button>
+          <button id="micTestBtn" class="mic-test-btn" onclick="toggleMicTest()">&#127908; Test Mic (hear yourself)</button>
           <p id="micTestStatus" class="settings-desc" style="margin-top:6px;color:var(--yellow)"></p>
         </div>
-
         <div class="settings-group">
           <h3>Input Device</h3>
           <select id="inputDeviceSel" class="settings-select" onchange="applyInputDevice()">
@@ -305,18 +322,17 @@ html[data-theme="light"]{
           <h3>Output Volume <span id="outputVolVal">100%</span></h3>
           <input type="range" id="outputVolSlider" class="settings-slider" min="0" max="1" step="0.05" value="1" oninput="updateOutputVol(this.value)">
         </div>
-
         <div class="settings-toggle-row">
           <div>
             <div class="toggle-label">AI Noise Suppression</div>
-            <div class="toggle-sub">DeepFilterNet3 — deep-filtering denoiser (RNNoise fallback) · <span id="rnnoiseStatus" style="color:var(--yellow)">loading…</span></div>
+            <div class="toggle-sub">DeepFilterNet3 &mdash; deep-filtering denoiser (RNNoise fallback) &middot; <span id="rnnoiseStatus" style="color:var(--yellow)">loading&hellip;</span></div>
           </div>
           <label class="toggle-switch"><input type="checkbox" id="rnnoiseToggle" checked onchange="toggleRNNoise(this.checked)"><span class="toggle-track"></span></label>
         </div>
         <div class="settings-group" id="suppressionGroup">
           <h3>Suppression Strength <span id="suppressionVal">100%</span></h3>
           <input type="range" id="suppressionSlider" class="settings-slider" min="0" max="100" step="5" value="100" oninput="updateSuppression(this.value)">
-          <p class="settings-desc">DeepFilterNet3 only. Higher = more aggressive noise removal; lower keeps more ambient/room tone. Applies live, no reconnect.</p>
+          <p class="settings-desc">DeepFilterNet3 only. Higher = more aggressive noise removal.</p>
         </div>
         <div class="settings-toggle-row">
           <div>
@@ -342,12 +358,12 @@ html[data-theme="light"]{
         <div class="settings-toggle-row">
           <div>
             <div class="toggle-label">UI Sounds</div>
-            <div class="toggle-sub">Join/leave, mute, deafen & stream blips</div>
+            <div class="toggle-sub">Join/leave, mute, deafen &amp; stream blips</div>
           </div>
           <label class="toggle-switch"><input type="checkbox" id="soundsToggle" checked onchange="toggleSounds(this.checked)"><span class="toggle-track"></span></label>
         </div>
         <div class="settings-group" id="broadcastHint" style="display:none">
-          <h3>🟢 NVIDIA Broadcast detected</h3>
+          <h3>&#127807; NVIDIA Broadcast detected</h3>
           <p class="settings-desc">For the cleanest mic, select the NVIDIA Broadcast device above. When you do, in-app AI suppression auto-disables to avoid double-processing.</p>
         </div>
       </div>
@@ -390,11 +406,11 @@ html[data-theme="light"]{
       <div class="settings-section" id="section-invite">
         <h2>Invite People</h2>
         <div class="settings-group" id="inviteCloudGroup" style="display:none">
-          <h3>🌐 Cloud Link <span style="background:var(--green);color:#111;font-size:11px;padding:2px 6px;border-radius:3px;font-weight:700">LIVE</span></h3>
-          <p class="settings-desc">Share this — works from anywhere, no setup needed.</p>
+          <h3>&#127760; Cloud Link <span style="background:var(--green);color:#111;font-size:11px;padding:2px 6px;border-radius:3px;font-weight:700">LIVE</span></h3>
+          <p class="settings-desc">Share this &mdash; works from anywhere, no setup needed.</p>
           <div class="invite-box">
             <span class="invite-url" id="inviteCloud"></span>
-            <button class="invite-copy-btn" onclick="copyEl('inviteCloud')">📋 Copy</button>
+            <button class="invite-copy-btn" onclick="copyEl('inviteCloud')">&#128203; Copy</button>
           </div>
         </div>
         <div class="settings-group">
@@ -402,7 +418,7 @@ html[data-theme="light"]{
           <p class="settings-desc">Anyone on your WiFi.</p>
           <div class="invite-box">
             <span class="invite-url" id="inviteLan"></span>
-            <button class="invite-copy-btn" onclick="copyEl('inviteLan')">📋 Copy</button>
+            <button class="invite-copy-btn" onclick="copyEl('inviteLan')">&#128203; Copy</button>
           </div>
         </div>
         <div class="settings-group" id="inviteTunnelGroup">
@@ -425,7 +441,7 @@ html[data-theme="light"]{
       </div>
 
     </div>
-    <button class="settings-close" onclick="closeModal('settingsModal')">✕</button>
+    <button class="settings-close" onclick="closeModal('settingsModal')">&#10005;</button>
   </div>
 </div>
 
@@ -434,7 +450,7 @@ html[data-theme="light"]{
 
 <!-- Channel sidebar -->
 <div id="channelSidebar">
-  <div class="server-header">⚡ Rescord</div>
+  <div class="server-header">&#9889; Rescord</div>
   <div class="sidebar-scroll">
     <div class="channel-section">
       <div class="section-header">Text Channels <span class="section-add" onclick="openModal('addTextModal')">+</span></div>
@@ -446,21 +462,21 @@ html[data-theme="light"]{
     </div>
   </div>
   <div id="voiceBar">
-    <div class="vbar-channel" id="vbarChannel">🔊 General Voice</div>
+    <div class="vbar-channel" id="vbarChannel">&#128266; General Voice</div>
     <div class="vbar-sub">Voice Connected</div>
     <div class="vbar-btns">
-      <button class="vbar-btn mute-btn" id="muteBtn" onclick="toggleMute()">🎤 Mute</button>
-      <button class="vbar-btn deaf-btn"  id="deafBtn"  onclick="toggleDeafen()">🔊 Deaf</button>
-      <button class="vbar-btn disc-btn"               onclick="leaveVoice()">✕</button>
+      <button class="vbar-btn mute-btn" id="muteBtn" onclick="toggleMute()">&#127908; Mute</button>
+      <button class="vbar-btn deaf-btn"  id="deafBtn"  onclick="toggleDeafen()">&#128266; Deaf</button>
+      <button class="vbar-btn disc-btn"               onclick="leaveVoice()">&#10005;</button>
     </div>
   </div>
   <div id="userBar">
     <div class="my-avatar vad-ring" id="myAvatar" data-my-vad="1">?</div>
     <div style="flex:1;min-width:0">
-      <div class="my-name" id="myName">—</div>
+      <div class="my-name" id="myName">&mdash;</div>
       <div class="my-tag"  id="myTag">Online</div>
     </div>
-    <button class="gear-btn" onclick="openSettings()" title="Settings">⚙</button>
+    <button class="gear-btn" onclick="openSettings()" title="Settings">&#9881;</button>
   </div>
 </div>
 
@@ -474,17 +490,34 @@ html[data-theme="light"]{
     <div id="messages"></div>
     <div id="inputArea">
       <div class="input-wrap">
+        <input type="file" id="fileInput" style="display:none" multiple>
+        <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">&#128206;</button>
         <input id="msgInput" type="text" placeholder="Message #general" onkeydown="if(event.key==='Enter')sendMessage()">
-        <button class="send-btn" onclick="sendMessage()">➤</button>
+        <button class="send-btn" onclick="sendMessage()">&#10148;</button>
       </div>
     </div>
   </div>
   <div id="voiceView">
     <div id="screenGrid" style="display:none;width:100%;max-width:900px;padding:0 16px;box-sizing:border-box"></div>
-    <div class="voice-ch-name" id="voiceChannelTitle">🔊 General Voice</div>
+    <div id="musicPlayer" style="display:none">
+      <img class="music-thumb" id="musicThumb" src="" alt="">
+      <div class="music-info">
+        <div class="music-title" id="musicTitle">No track</div>
+        <div class="music-sub" id="musicSub">Music Bot</div>
+      </div>
+      <div id="ytPlayerWrap"><div id="ytPlayer"></div></div>
+      <div class="music-ctl">
+        <button class="music-btn" onclick="musicCmd('pause')" title="Pause">&#9646;&#9646;</button>
+        <button class="music-btn" onclick="musicCmd('resume')" title="Resume">&#9654;</button>
+        <button class="music-btn" onclick="musicCmd('skip')" title="Skip">&#9654;&#9654;&#124;</button>
+        <button class="music-btn" onclick="musicCmd('stop')" title="Stop">&#9632;</button>
+      </div>
+    </div>
+    <div class="voice-ch-name" id="voiceChannelTitle">&#128266; General Voice</div>
     <div class="voice-participants" id="voiceParticipants"></div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="vbar-btn" id="shareBtn" onclick="toggleScreenShare()" style="padding:10px 16px;font-size:14px">🖥 Share Screen</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <button class="vbar-btn" id="shareBtn" onclick="toggleScreenShare()" style="padding:10px 16px;font-size:14px">&#128421; Share Screen</button>
+      <button class="vbar-btn" id="audioShareBtn" onclick="toggleAudioShare()" style="padding:10px 16px;font-size:14px;background:var(--bg-active);color:var(--text-primary)">&#128266; Audio</button>
       <button class="vbar-btn disc-btn" style="padding:10px 24px;font-size:14px;flex:none" onclick="leaveVoice()">Disconnect</button>
     </div>
   </div>
@@ -492,7 +525,7 @@ html[data-theme="light"]{
 
 <!-- Member sidebar -->
 <div id="memberSidebar">
-  <div class="member-section-hdr">Online — <span id="onlineCount">0</span></div>
+  <div class="member-section-hdr">Online &mdash; <span id="onlineCount">0</span></div>
   <div id="memberList"></div>
 </div>
 
@@ -505,10 +538,10 @@ const ICE_CFG = {
     { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun3.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
-    { urls: 'turn:openrelay.metered.ca:80',               username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turns:openrelay.metered.ca:443',             username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443?transport=tcp',username: 'openrelayproject', credential: 'openrelayproject' }
+    { urls: 'turn:openrelay.metered.ca:80',                username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443',               username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turns:openrelay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
   ],
   bundlePolicy: 'max-bundle',
   iceCandidatePoolSize: 10
@@ -516,7 +549,7 @@ const ICE_CFG = {
 
 // ---- State ----
 let ws, myId, myNickname = '';
-let myAvatar = (() => { try { return localStorage.getItem('rescord_avatar') || null; } catch(e){ return null; } })();
+let myAvatar = (function(){ try { return localStorage.getItem('rescord_avatar') || null; } catch(e){ return null; } })();
 let currentText = 'general', currentVoice = null;
 let isMuted = false, isDeafened = false, isServerMuted = false, isHost = false;
 let appState = { users: [], textChannels: [], voiceChannels: [], hostId: null };
@@ -526,13 +559,39 @@ let history = {}, lanIp = location.hostname, serverPort = 3000, publicUrl = null
 const peers = {};
 let localStream = null, rawStream = null;
 let audioCtx = null, gainNode = null, localAnalyser = null, rnnoiseNode = null, dfnetNode = null;
-let dfnetAssets = null; // cached { wasmBytes, modelBytes } for DeepFilterNet3
-let activeDenoiser = 'none'; // 'dfnet' | 'rnnoise' | 'off' | 'none'
-let dfnetGivenUp = false; // set true if DFNet3 fails at runtime → use RNNoise instead (never passthrough)
+let dfnetAssets = null;
+let activeDenoiser = 'none';
+let dfnetGivenUp = false;
 
-// Fetch DeepFilterNet3 assets once (self-hosted under /dfnet/). We keep BOTH a main-thread
-// compiled Module (the proven path) AND the raw bytes, so the worklet can compile itself if
-// cloning a Module into the AudioWorklet ever fails in Electron.
+// Screen share
+let screenStream = null, isSharingScreen = false;
+
+// Audio-only share
+let audioShareStream = null, isSharingAudio = false;
+let audioShareSenders = {};  // peerId -> RTCRtpSender
+
+// VAD
+let localVADLoop = null;
+const remoteVAD = {};
+
+// Music bot
+let ytPlayer = null, ytReady = false, ytLoaded = false;
+let currentMusicState = null;
+
+// User audio prefs
+const audioSettings = {
+  inputDeviceId: 'default', outputDeviceId: 'default',
+  noiseSuppression: true, echoCancellation: true, autoGainControl: false,
+  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true, suppressionLevel: 100,
+  sounds: (function(){ try { return localStorage.getItem('rescord_sounds') !== '0'; } catch(e){ return true; } })(),
+  theme: (function(){ try { return localStorage.getItem('rescord_theme') || 'mint'; } catch(e){ return 'mint'; } })()
+};
+const mutedUsers = new Set(), userVolumes = {};
+
+// Mic test
+let testStream = null, testCtx = null, testMeterFrame = null;
+
+// ---- DeepFilterNet3 ----
 async function loadDFNet3Assets() {
   if (dfnetAssets) return dfnetAssets;
   const base = '/dfnet/';
@@ -541,33 +600,17 @@ async function loadDFNet3Assets() {
     fetch(base + 'DeepFilterNet3_onnx.tar.gz').then(r => { if (!r.ok) throw new Error('df model ' + r.status); return r.arrayBuffer(); })
   ]);
   let wasmModule = null;
-  try { wasmModule = await WebAssembly.compile(wasmBytes); } catch (e) { console.warn('[DFNet3] main-thread compile failed, will pass bytes:', e); }
+  try { wasmModule = await WebAssembly.compile(wasmBytes); } catch (e) { console.warn('[DFNet3] main-thread compile failed:', e); }
   dfnetAssets = { wasmModule, wasmBytes, modelBytes };
   return dfnetAssets;
 }
-let screenStream = null, isSharingScreen = false;
-let localVADLoop = null;
-const remoteVAD = {}; // peerId -> { ctx, frame }
-
-// User audio prefs
-const audioSettings = {
-  inputDeviceId: 'default', outputDeviceId: 'default',
-  noiseSuppression: true, echoCancellation: true, autoGainControl: false,
-  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true, suppressionLevel: 100,
-  sounds: (() => { try { return localStorage.getItem('rescord_sounds') !== '0'; } catch(e){ return true; } })(),
-  theme: (() => { try { return localStorage.getItem('rescord_theme') || 'mint'; } catch(e){ return 'mint'; } })()
-};
-const mutedUsers = new Set(), userVolumes = {};
-
-// Mic test
-let testStream = null, testCtx = null, testMeterFrame = null;
 
 // ---- WebSocket ----
 function wsConnect() {
   const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
   ws = new WebSocket(proto + location.host);
-  ws.onmessage = e => handleMsg(JSON.parse(e.data));
-  ws.onclose   = () => setTimeout(wsConnect, 2000);
+  ws.onmessage = function(e) { handleMsg(JSON.parse(e.data)); };
+  ws.onclose   = function() { setTimeout(wsConnect, 2000); };
 }
 
 function wsSend(data) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(data)); }
@@ -595,6 +638,12 @@ function handleMsg(msg) {
       history[msg.message.channel].push(msg.message);
       if (msg.message.channel === currentText) appendMessage(msg.message);
       break;
+    case 'file-message':
+      if (msg.message.channel === currentText) appendMessage(msg.message);
+      break;
+    case 'music-state':
+      handleMusicState(msg.state);
+      break;
     case 'user-joined-voice':
       if (currentVoice && msg.channel === currentVoice) { initiateCall(msg.userId); sfx('userJoin'); }
       break;
@@ -602,10 +651,10 @@ function handleMsg(msg) {
       if (currentVoice && msg.channel === currentVoice) sfx('userLeave');
       closePeer(msg.userId); updateVoiceView(); break;
     case 'voice-peers':
-      msg.peers.forEach(pid => initiateCall(pid)); break;
+      msg.peers.forEach(function(pid) { initiateCall(pid); }); break;
     case 'server-mute':
       isServerMuted = msg.muted;
-      if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = !isMuted && !isServerMuted);
+      if (localStream) localStream.getAudioTracks().forEach(function(t) { t.enabled = !isMuted && !isServerMuted; });
       document.getElementById('myTag').textContent = isServerMuted ? '🔇 Server Muted' : (isHost ? '👑 Host' : 'Online');
       break;
     case 'kicked':
@@ -619,7 +668,7 @@ function handleMsg(msg) {
 
 // ---- Nickname ----
 function submitNickname() {
-  const name = document.getElementById('nicknameInput').value.trim();
+  var name = document.getElementById('nicknameInput').value.trim();
   if (!name) return;
   myNickname = name;
   document.getElementById('nicknameModal').classList.add('hidden');
@@ -629,11 +678,11 @@ function submitNickname() {
   if (myAvatar) sendAvatar();
   renderChannels(); renderMessages(); renderMembers();
 }
-document.getElementById('nicknameInput').onkeydown = e => { if (e.key === 'Enter') submitNickname(); };
+document.getElementById('nicknameInput').onkeydown = function(e) { if (e.key === 'Enter') submitNickname(); };
 
 // URL param bypass: ?name=Marco
 (function() {
-  const n = new URLSearchParams(location.search).get('name');
+  var n = new URLSearchParams(location.search).get('name');
   if (n && n.trim()) {
     myNickname = n.trim().slice(0, 32);
     document.getElementById('nicknameModal').classList.add('hidden');
@@ -645,7 +694,7 @@ document.getElementById('nicknameInput').onkeydown = e => { if (e.key === 'Enter
 // ---- Modals ----
 function openModal(id) {
   document.getElementById(id).classList.remove('hidden');
-  const inp = document.getElementById(id).querySelector('input');
+  var inp = document.getElementById(id).querySelector('input');
   if (inp) { inp.value = ''; inp.focus(); }
 }
 function closeModal(id) {
@@ -655,32 +704,32 @@ function closeModal(id) {
 
 // ---- Channels ----
 function renderChannels() {
-  const tl = document.getElementById('textChannelList');
+  var tl = document.getElementById('textChannelList');
   tl.innerHTML = '';
-  appState.textChannels.forEach(ch => {
-    const el = document.createElement('div');
+  appState.textChannels.forEach(function(ch) {
+    var el = document.createElement('div');
     el.className = 'channel-item' + (ch === currentText && !currentVoice ? ' active' : '');
     el.innerHTML = '<span class="channel-prefix">#</span>' + esc(ch);
-    el.onclick = () => switchText(ch);
+    el.onclick = function() { switchText(ch); };
     tl.appendChild(el);
   });
-  const vl = document.getElementById('voiceChannelList');
+  var vl = document.getElementById('voiceChannelList');
   vl.innerHTML = '';
-  appState.voiceChannels.forEach(ch => {
-    const el = document.createElement('div');
+  appState.voiceChannels.forEach(function(ch) {
+    var el = document.createElement('div');
     el.className = 'channel-item' + (ch === currentVoice ? ' active' : '');
     el.innerHTML = '<span class="channel-prefix">🔊</span>' + esc(ch);
-    el.onclick = () => joinVoice(ch);
+    el.onclick = function() { joinVoice(ch); };
     vl.appendChild(el);
-    const members = appState.users.filter(u => u.voiceChannel === ch);
+    var members = appState.users.filter(function(u) { return u.voiceChannel === ch; });
     if (members.length) {
-      const sub = document.createElement('div');
+      var sub = document.createElement('div');
       sub.className = 'voice-members-list';
-      members.forEach(u => {
-        const r = document.createElement('div');
+      members.forEach(function(u) {
+        var r = document.createElement('div');
         r.className = 'voice-member-row';
-        r.innerHTML = `<div class="vm-avatar vad-ring" data-vad="${u.id}">${avatarInner(u)}</div>${esc(u.nickname||'?')}`;
-        if (u.id !== myId) { r.setAttribute('data-ctx-user', u.id); r.oncontextmenu = e => showUserCtx(e, u.id); r.style.cursor = 'context-menu'; }
+        r.innerHTML = '<div class="vm-avatar vad-ring" data-vad="' + u.id + '">' + avatarInner(u) + '</div>' + esc(u.nickname || '?');
+        if (u.id !== myId) { r.setAttribute('data-ctx-user', u.id); r.oncontextmenu = (function(uid){ return function(e) { showUserCtx(e, uid); }; })(u.id); r.style.cursor = 'context-menu'; }
         sub.appendChild(r);
       });
       vl.appendChild(sub);
@@ -699,149 +748,241 @@ function switchText(ch) {
 }
 
 // ---- Messages ----
-let lastSenderId = null, lastSenderTime = 0;
+var lastSenderId = null, lastSenderTime = 0;
 
 function renderMessages() {
-  const c = document.getElementById('messages');
+  var c = document.getElementById('messages');
   c.innerHTML = '';
   lastSenderId = null; lastSenderTime = 0;
-  (history[currentText] || []).forEach(m => appendMessage(m, false));
+  (history[currentText] || []).forEach(function(m) { appendMessage(m, false); });
   c.scrollTop = c.scrollHeight;
 }
 
-function appendMessage(msg, scroll = true) {
+function appendMessage(msg, scroll) {
+  if (scroll === undefined) scroll = true;
   if (msg.channel !== currentText) return;
-  const c = document.getElementById('messages');
-  const t = new Date(msg.timestamp);
-  const ts = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const compact = msg.senderId === lastSenderId && (msg.timestamp - lastSenderTime) < 300000;
+  var c = document.getElementById('messages');
+  var t = new Date(msg.timestamp);
+  var ts = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // System message (no senderId)
+  if (msg.system) {
+    var sys = document.createElement('div');
+    sys.className = 'msg-sys';
+    sys.textContent = msg.content;
+    c.appendChild(sys);
+    if (scroll) c.scrollTop = c.scrollHeight;
+    return;
+  }
+
+  var compact = msg.senderId === lastSenderId && (msg.timestamp - lastSenderTime) < 300000;
   lastSenderId = msg.senderId; lastSenderTime = msg.timestamp;
-  const el = document.createElement('div');
+  var el = document.createElement('div');
   el.className = 'msg-group' + (compact ? ' compact' : '');
-  const msgUser = appState.users.find(u => u.id === msg.senderId) || { nickname: msg.sender, avatar: null };
-  el.innerHTML = compact
-    ? `<div class="msg-left"><span class="msg-ts">${ts}</span></div><div class="msg-body"><div class="msg-text">${esc(msg.content)}</div></div>`
-    : `<div class="msg-left"><div class="msg-avatar">${avatarInner(msgUser)}</div></div><div class="msg-body"><div class="msg-hdr"><span class="msg-author">${esc(msg.sender)}</span><span class="msg-time">${ts}</span></div><div class="msg-text">${esc(msg.content)}</div></div>`;
+  var msgUser = appState.users.find(function(u) { return u.id === msg.senderId; }) || { nickname: msg.sender, avatar: null };
+
+  // Build content: file or text
+  var contentHtml;
+  if (msg.fileData) {
+    var isImage = msg.mimetype && msg.mimetype.indexOf('image/') === 0;
+    if (isImage) {
+      contentHtml = '<img class="msg-img" src="' + msg.fileData + '" alt="' + esc(msg.filename) + '" onclick="window.open(this.src)">';
+    } else {
+      var sizeStr = msg.size ? ' (' + formatFileSize(msg.size) + ')' : '';
+      contentHtml = '<a class="msg-file" href="' + msg.fileData + '" download="' + esc(msg.filename) + '">📎 ' + esc(msg.filename) + sizeStr + '</a>';
+    }
+  } else {
+    contentHtml = '<div class="msg-text">' + esc(msg.content || '') + '</div>';
+  }
+
+  if (compact) {
+    el.innerHTML = '<div class="msg-left"><span class="msg-ts">' + ts + '</span></div><div class="msg-body">' + contentHtml + '</div>';
+  } else {
+    el.innerHTML = '<div class="msg-left"><div class="msg-avatar">' + avatarInner(msgUser) + '</div></div>' +
+      '<div class="msg-body"><div class="msg-hdr"><span class="msg-author">' + esc(msg.sender) + '</span><span class="msg-time">' + ts + '</span></div>' + contentHtml + '</div>';
+  }
   c.appendChild(el);
   if (scroll) c.scrollTop = c.scrollHeight;
 }
 
-function sendMessage() {
-  const inp = document.getElementById('msgInput');
-  const content = inp.value.trim();
-  if (!content || !myNickname) return;
-  wsSend({ type: 'text-message', channel: currentText, content });
-  inp.value = '';
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
 }
+
+// ---- Slash commands ----
+var SLASH_HELP = [
+  '/play <youtube-url or search>  — play a YouTube track for everyone',
+  '/pause                          — pause playback',
+  '/resume                         — resume playback',
+  '/stop                           — stop and clear music',
+  '/skip                           — skip to next queued track',
+  '/queue <youtube-url or search>  — add to queue'
+].join('\n');
+
+function extractYouTubeId(str) {
+  // youtu.be/ID or youtube.com/watch?v=ID or youtube.com/embed/ID
+  var m = str.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/))([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function handleSlashCommand(text) {
+  var t = text.trim();
+  if (t === '/help') {
+    appendMessage({ channel: currentText, system: true, content: SLASH_HELP, timestamp: Date.now() });
+    return true;
+  }
+  if (t === '/pause')  { musicCmd('pause');  return true; }
+  if (t === '/resume') { musicCmd('resume'); return true; }
+  if (t === '/stop')   { musicCmd('stop');   return true; }
+  if (t === '/skip')   { musicCmd('skip');   return true; }
+  var playMatch = t.match(/^\/play\s+(.+)$/i);
+  if (playMatch) {
+    var arg = playMatch[1].trim();
+    var vid = extractYouTubeId(arg);
+    if (vid) {
+      wsSend({ type: 'music-command', command: 'play', videoId: vid });
+    } else {
+      wsSend({ type: 'music-command', command: 'play', search: arg });
+    }
+    return true;
+  }
+  var queueMatch = t.match(/^\/queue\s+(.+)$/i);
+  if (queueMatch) {
+    var arg2 = queueMatch[1].trim();
+    var vid2 = extractYouTubeId(arg2);
+    if (vid2) {
+      wsSend({ type: 'music-command', command: 'queue', videoId: vid2 });
+    } else {
+      wsSend({ type: 'music-command', command: 'queue', search: arg2 });
+    }
+    return true;
+  }
+  return false;
+}
+
+function sendMessage() {
+  var inp = document.getElementById('msgInput');
+  var content = inp.value.trim();
+  if (!content || !myNickname) return;
+  inp.value = '';
+  if (content.startsWith('/')) {
+    if (handleSlashCommand(content)) return;
+  }
+  wsSend({ type: 'text-message', channel: currentText, content: content });
+}
+
+// ---- File sharing ----
+document.getElementById('fileInput').onchange = function(e) {
+  var files = Array.from(e.target.files || []);
+  e.target.value = '';
+  var MAX = 8 * 1024 * 1024;
+  files.forEach(function(file) {
+    if (file.size > MAX) {
+      alert(file.name + ' is too large (max 8 MB).');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      wsSend({
+        type: 'file-message',
+        channel: currentText,
+        filename: file.name,
+        mimetype: file.type || 'application/octet-stream',
+        size: file.size,
+        data: ev.target.result
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+};
 
 // ---- Members ----
 function renderMembers() {
-  const list = document.getElementById('memberList');
+  var list = document.getElementById('memberList');
   list.innerHTML = '';
   document.getElementById('onlineCount').textContent = appState.users.length;
-  appState.users.forEach(u => {
-    const el = document.createElement('div');
+  appState.users.forEach(function(u) {
+    var el = document.createElement('div');
     el.className = 'member-item';
-    const isSelf = u.id === myId;
-    const inVoice = !!u.voiceChannel;
-    const muted = mutedUsers.has(u.id);
-    const sm = u.serverMuted;
-    const vadAttr = isSelf ? 'data-my-vad="1"' : (inVoice ? `data-vad="${u.id}"` : '');
-
-    let nameHtml = esc(u.nickname || 'Anonymous');
+    var isSelf = u.id === myId;
+    var inVoice = !!u.voiceChannel;
+    var muted = mutedUsers.has(u.id);
+    var sm = u.serverMuted;
+    var vadAttr = isSelf ? 'data-my-vad="1"' : (inVoice ? 'data-vad="' + u.id + '"' : '');
+    var nameHtml = esc(u.nickname || 'Anonymous');
     if (u.id === appState.hostId) nameHtml += '<span class="host-badge">HOST</span>';
     if (sm) nameHtml += ' 🔇';
-
-    let btns = '';
+    var btns = '';
     if (inVoice && !isSelf) {
-      btns += `<button class="mem-btn show${muted?' on':''}" onclick="toggleUserMute('${u.id}')">${muted?'🔇':'🔊'}</button>`;
+      btns += '<button class="mem-btn show' + (muted ? ' on' : '') + '" onclick="toggleUserMute(\'' + u.id + '\')">' + (muted ? '🔇' : '🔊') + '</button>';
     }
     if (isHost && !isSelf && inVoice) {
-      btns += `<button class="mem-btn show${sm?' on':''}" onclick="hostMute('${u.id}')" title="Server Mute">${sm?'🚫':'🔈'}</button>`;
-      btns += `<button class="mem-btn show" onclick="hostKick('${u.id}')" style="color:var(--red)">✕</button>`;
+      btns += '<button class="mem-btn show' + (sm ? ' on' : '') + '" onclick="hostMute(\'' + u.id + '\')" title="Server Mute">' + (sm ? '🚫' : '🔈') + '</button>';
+      btns += '<button class="mem-btn show" onclick="hostKick(\'' + u.id + '\')" style="color:var(--red)">✕</button>';
     }
-
-    el.innerHTML = `<div class="mem-avatar vad-ring" ${vadAttr}>${avatarInner(u)}<div class="mem-dot"></div></div><div class="mem-name">${nameHtml}</div><div class="mem-actions">${btns}</div>`;
-    if (!isSelf) { el.setAttribute('data-ctx-user', u.id); el.oncontextmenu = e => showUserCtx(e, u.id); }
+    el.innerHTML = '<div class="mem-avatar vad-ring" ' + vadAttr + '>' + avatarInner(u) + '<div class="mem-dot"></div></div><div class="mem-name">' + nameHtml + '</div><div class="mem-actions">' + btns + '</div>';
+    if (!isSelf) { el.setAttribute('data-ctx-user', u.id); el.oncontextmenu = (function(uid){ return function(e) { showUserCtx(e, uid); }; })(u.id); }
     list.appendChild(el);
   });
 }
 
 // ---- Channel creation ----
 function submitNewText() {
-  const n = document.getElementById('newTextInput').value.trim();
+  var n = document.getElementById('newTextInput').value.trim();
   if (n) wsSend({ type: 'create-text-channel', name: n });
   closeModal('addTextModal');
 }
 function submitNewVoice() {
-  const n = document.getElementById('newVoiceInput').value.trim();
+  var n = document.getElementById('newVoiceInput').value.trim();
   if (n) wsSend({ type: 'create-voice-channel', name: n });
   closeModal('addVoiceModal');
 }
-document.getElementById('newTextInput').onkeydown  = e => { if (e.key==='Enter') submitNewText();  if (e.key==='Escape') closeModal('addTextModal'); };
-document.getElementById('newVoiceInput').onkeydown = e => { if (e.key==='Enter') submitNewVoice(); if (e.key==='Escape') closeModal('addVoiceModal'); };
+document.getElementById('newTextInput').onkeydown  = function(e) { if (e.key==='Enter') submitNewText();  if (e.key==='Escape') closeModal('addTextModal'); };
+document.getElementById('newVoiceInput').onkeydown = function(e) { if (e.key==='Enter') submitNewVoice(); if (e.key==='Escape') closeModal('addVoiceModal'); };
 
 // ---- Audio pipeline ----
-// Serialize pipeline builds: an AudioContext + its nodes must never interleave with another
-// build (a 2nd build mid-await would swap module-scope audioCtx/gainNode and cause
-// "cannot connect to an AudioNode belonging to a different audio context").
-let _pipelineChain = Promise.resolve();
+var _pipelineChain = Promise.resolve();
 function buildAudioPipeline(stream) {
-  const next = _pipelineChain.then(() => _buildAudioPipeline(stream), () => _buildAudioPipeline(stream));
-  _pipelineChain = next.catch(() => {});
+  var next = _pipelineChain.then(function() { return _buildAudioPipeline(stream); }, function() { return _buildAudioPipeline(stream); });
+  _pipelineChain = next.catch(function() {});
   return next;
 }
 async function _buildAudioPipeline(stream) {
-  // Close previous context
   if (audioCtx) { try { audioCtx.close(); } catch(e) {} }
-  // Pin to 48 kHz: BOTH denoisers are 48k-native (RNNoise = 480-sample/10ms frames,
-  // DeepFilterNet3 model hop = 480 @48k). On a 44.1 kHz device the frame timing is off
-  // ~9% and suppression collapses to near-passthrough — audio flows, no NS. Forcing the
-  // context rate makes the browser resample the mic into 48k so the models see correct audio.
-  const AC = window.AudioContext || window.webkitAudioContext;
+  var AC = window.AudioContext || window.webkitAudioContext;
   try {
     audioCtx = new AC({ sampleRate: 48000 });
-    if (audioCtx.sampleRate !== 48000) { // device refused; tear down and use default
-      try { audioCtx.close(); } catch(e) {}
-      audioCtx = new AC();
-      console.warn('[denoise] 48k context unavailable, running at', audioCtx.sampleRate, 'Hz — suppression may be degraded');
-    }
-  } catch (e) {
-    audioCtx = new AC();
-    console.warn('[denoise] sampleRate:48000 rejected, running at', audioCtx.sampleRate, 'Hz:', e);
-  }
+    if (audioCtx.sampleRate !== 48000) { try { audioCtx.close(); } catch(e) {} audioCtx = new AC(); }
+  } catch (e) { audioCtx = new AC(); }
   if (audioCtx.state === 'suspended') { try { await audioCtx.resume(); } catch(e) {} }
 
   gainNode      = audioCtx.createGain();
   gainNode.gain.value = audioSettings.micGain;
   localAnalyser = audioCtx.createAnalyser();
   localAnalyser.fftSize = 256;
-  const dest    = audioCtx.createMediaStreamDestination();
-  const source  = audioCtx.createMediaStreamSource(stream);
-
-  source.connect(localAnalyser); // VAD tap (raw signal)
+  var dest   = audioCtx.createMediaStreamDestination();
+  var source = audioCtx.createMediaStreamSource(stream);
+  source.connect(localAnalyser);
 
   if (audioSettings.rnnoiseEnabled) {
-    let connected = false;
-    // --- Primary denoiser: DeepFilterNet3 (deep filtering; ~20dB+ noise cut, speech preserved) ---
+    var connected = false;
     if (!dfnetGivenUp) try {
-      const { wasmModule, wasmBytes, modelBytes } = await loadDFNet3Assets();
+      var assets = await loadDFNet3Assets();
       await audioCtx.audioWorklet.addModule('/dfnet/dfnet3-worklet.js');
-      const mkOpts = wf => ({ processorOptions: { wasmModule: wf, modelBytes, suppressionLevel: audioSettings.suppressionLevel } });
-      // Prefer the compiled Module (fast); if cloning it into the worklet throws, retry with raw bytes.
-      try { dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', mkOpts(wasmModule || wasmBytes)); }
-      catch (cloneErr) { console.warn('[DFNet3] Module clone failed, retrying with bytes:', cloneErr); dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', mkOpts(wasmBytes)); }
-      dfnetNode.port.onmessage = ({ data }) => {
+      var mkOpts = function(wf) { return { processorOptions: { wasmModule: wf, modelBytes: assets.modelBytes, suppressionLevel: audioSettings.suppressionLevel } }; };
+      try { dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', mkOpts(assets.wasmModule || assets.wasmBytes)); }
+      catch (cloneErr) { dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', mkOpts(assets.wasmBytes)); }
+      dfnetNode.port.onmessage = function(ev) {
+        var data = ev.data;
         if (data.type !== 'DF_STATUS') return;
         if (data.ok) { updateDenoiseStatus('dfnet'); }
         else {
-          const msg = String(data.error || 'init failed');
-          console.error('[DFNet3] worklet init failed:', msg);
-          window.__dfnetError = msg;
-          const el = document.getElementById('rnnoiseStatus');
-          if (el) { el.title = msg; }
-          // Never leave the mic in passthrough — fall back to RNNoise immediately.
-          if (!dfnetGivenUp) { dfnetGivenUp = true; console.warn('[DFNet3] falling back to RNNoise'); reacquireStream(); }
+          window.__dfnetError = String(data.error || 'init failed');
+          var el = document.getElementById('rnnoiseStatus');
+          if (el) el.title = window.__dfnetError;
+          if (!dfnetGivenUp) { dfnetGivenUp = true; reacquireStream(); }
         }
       };
       source.connect(dfnetNode);
@@ -853,76 +994,65 @@ async function _buildAudioPipeline(stream) {
       console.warn('[DFNet3] init failed, falling back to RNNoise:', e);
       dfnetNode = null;
     }
-    // --- Fallback denoiser: RNNoise ---
     if (!connected) try {
-      // The sync build (rnnoise-sync.js) has its OWN correct WASM inlined as base64,
-      // purpose-built for AudioWorklets. Do NOT fetch/override rnnoise.wasm — that's the
-      // mismatched old 0.1 async binary and forcing it via wasmBinary breaks the heap
-      // (malloc returns 0, every call traps). We strip ESM-only syntax (import.meta / export
-      // default) so the concatenated source runs in the worklet, then let the build load its
-      // inlined binary itself.
-      let syncSrc = await fetch('/rnnoise-sync.js').then(r => { if (!r.ok) throw new Error('sync fetch ' + r.status); return r.text(); });
+      var syncSrc = await fetch('/rnnoise-sync.js').then(function(r) { if (!r.ok) throw new Error('sync fetch ' + r.status); return r.text(); });
       syncSrc = syncSrc
         .replace('var _scriptDir = import.meta.url;', 'var _scriptDir = undefined;')
         .replace('export default createRNNWasmModuleSync;', '');
-      const workletSrc = syncSrc + `
-const FRAME_SIZE = 480;
-let rnn = null, denoiseState = null, inPtr = 0, outPtr = 0;
-const inputBuf = [], outputBuf = [];
-// Init synchronously from the build's inlined binary — no wasmBinary override.
-try {
-  const _mod = createRNNWasmModuleSync({});
-  _mod.ready.then(() => {
-    rnn = _mod;
-    denoiseState = rnn._rnnoise_create(0);
-    inPtr  = rnn._malloc(FRAME_SIZE * 4);
-    outPtr = rnn._malloc(FRAME_SIZE * 4);
-  }).catch(e => console.error('[RNNoise] ready failed:', e));
-} catch (e) { console.error('[RNNoise] factory failed:', e); }
-class RNNoiseProcessor extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    this._bypass = false;
-    this.port.onmessage = ({ data }) => {
-      if (data.type === 'bypass') this._bypass = data.value;
-      if (data.type === 'ready?') this.port.postMessage({ type: 'ready', ok: !!(rnn && denoiseState) });
-    };
-  }
-  process(inputs, outputs) {
-    const inp = inputs[0]?.[0], out = outputs[0]?.[0];
-    if (!inp || !out) return true;
-    if (!rnn || !denoiseState || this._bypass) { out.set(inp); return true; }
-    for (let i = 0; i < inp.length; i++) inputBuf.push(inp[i]);
-    while (inputBuf.length >= FRAME_SIZE) {
-      const iv = new Float32Array(rnn.HEAPF32.buffer, inPtr, FRAME_SIZE);
-      for (let i = 0; i < FRAME_SIZE; i++) iv[i] = inputBuf[i] * 32768;
-      inputBuf.splice(0, FRAME_SIZE);
-      rnn._rnnoise_process_frame(denoiseState, outPtr, inPtr);
-      const ov = new Float32Array(rnn.HEAPF32.buffer, outPtr, FRAME_SIZE);
-      for (let i = 0; i < FRAME_SIZE; i++) outputBuf.push(ov[i] / 32768);
-    }
-    if (outputBuf.length >= out.length) {
-      for (let i = 0; i < out.length; i++) out[i] = outputBuf.shift();
-    } else {
-      out.set(inp);
-    }
-    return true;
-  }
-}
-registerProcessor('rnnoise-processor', RNNoiseProcessor);
-`;
-      const blob = new Blob([workletSrc], { type: 'application/javascript' });
-      const blobUrl = URL.createObjectURL(blob);
+      var workletSrc = syncSrc + '\n' +
+'const FRAME_SIZE = 480;\n' +
+'let rnn = null, denoiseState = null, inPtr = 0, outPtr = 0;\n' +
+'const inputBuf = [], outputBuf = [];\n' +
+'try {\n' +
+'  const _mod = createRNNWasmModuleSync({});\n' +
+'  _mod.ready.then(() => {\n' +
+'    rnn = _mod;\n' +
+'    denoiseState = rnn._rnnoise_create(0);\n' +
+'    inPtr  = rnn._malloc(FRAME_SIZE * 4);\n' +
+'    outPtr = rnn._malloc(FRAME_SIZE * 4);\n' +
+'  }).catch(e => console.error("[RNNoise] ready failed:", e));\n' +
+'} catch (e) { console.error("[RNNoise] factory failed:", e); }\n' +
+'class RNNoiseProcessor extends AudioWorkletProcessor {\n' +
+'  constructor() {\n' +
+'    super();\n' +
+'    this._bypass = false;\n' +
+'    this.port.onmessage = ({ data }) => {\n' +
+'      if (data.type === "bypass") this._bypass = data.value;\n' +
+'      if (data.type === "ready?") this.port.postMessage({ type: "ready", ok: !!(rnn && denoiseState) });\n' +
+'    };\n' +
+'  }\n' +
+'  process(inputs, outputs) {\n' +
+'    const inp = inputs[0]?.[0], out = outputs[0]?.[0];\n' +
+'    if (!inp || !out) return true;\n' +
+'    if (!rnn || !denoiseState || this._bypass) { out.set(inp); return true; }\n' +
+'    for (let i = 0; i < inp.length; i++) inputBuf.push(inp[i]);\n' +
+'    while (inputBuf.length >= FRAME_SIZE) {\n' +
+'      const iv = new Float32Array(rnn.HEAPF32.buffer, inPtr, FRAME_SIZE);\n' +
+'      for (let i = 0; i < FRAME_SIZE; i++) iv[i] = inputBuf[i] * 32768;\n' +
+'      inputBuf.splice(0, FRAME_SIZE);\n' +
+'      rnn._rnnoise_process_frame(denoiseState, outPtr, inPtr);\n' +
+'      const ov = new Float32Array(rnn.HEAPF32.buffer, outPtr, FRAME_SIZE);\n' +
+'      for (let i = 0; i < FRAME_SIZE; i++) outputBuf.push(ov[i] / 32768);\n' +
+'    }\n' +
+'    if (outputBuf.length >= out.length) {\n' +
+'      for (let i = 0; i < out.length; i++) out[i] = outputBuf.shift();\n' +
+'    } else { out.set(inp); }\n' +
+'    return true;\n' +
+'  }\n' +
+'}\n' +
+'registerProcessor("rnnoise-processor", RNNoiseProcessor);\n';
+      var blob = new Blob([workletSrc], { type: 'application/javascript' });
+      var blobUrl = URL.createObjectURL(blob);
       await audioCtx.audioWorklet.addModule(blobUrl);
       URL.revokeObjectURL(blobUrl);
       rnnoiseNode = new AudioWorkletNode(audioCtx, 'rnnoise-processor');
-      let rnnoiseReady = false;
-      rnnoiseNode.port.onmessage = ({ data }) => {
-        if (data.type === 'ready' && data.ok) { rnnoiseReady = true; updateDenoiseStatus('rnnoise'); }
+      var rnnoiseReady = false;
+      rnnoiseNode.port.onmessage = function(ev) {
+        if (ev.data.type === 'ready' && ev.data.ok) { rnnoiseReady = true; updateDenoiseStatus('rnnoise'); }
       };
       updateDenoiseStatus('loading-rnnoise');
-      let rnnoiseRetries = 0;
-      const pollReady = () => {
+      var rnnoiseRetries = 0;
+      var pollReady = function() {
         if (!rnnoiseNode || rnnoiseReady) return;
         rnnoiseNode.port.postMessage({ type: 'ready?' });
         if (++rnnoiseRetries < 20) setTimeout(pollReady, 500);
@@ -933,10 +1063,7 @@ registerProcessor('rnnoise-processor', RNNoiseProcessor);
       rnnoiseNode.connect(gainNode);
       activeDenoiser = 'rnnoise';
       connected = true;
-    } catch(e) {
-      console.warn('[RNNoise] init failed, bypassing:', e);
-    }
-    // --- Last resort: passthrough (no denoise) ---
+    } catch(e) { console.warn('[RNNoise] init failed:', e); }
     if (!connected) {
       source.connect(gainNode);
       activeDenoiser = 'none';
@@ -955,26 +1082,21 @@ registerProcessor('rnnoise-processor', RNNoiseProcessor);
 }
 
 async function getProcessedStream() {
-  const baseAudio = {
+  var baseAudio = {
     noiseSuppression: audioSettings.noiseSuppression,
     echoCancellation: audioSettings.echoCancellation,
     autoGainControl:  audioSettings.autoGainControl
   };
-  const wantDevice = audioSettings.inputDeviceId && audioSettings.inputDeviceId !== 'default';
-  // Use { ideal } (not { exact }) so a missing/changed device — e.g. NVIDIA Broadcast not
-  // running — does NOT hard-fail with OverconstrainedError. Retry on default if it still fails.
+  var wantDevice = audioSettings.inputDeviceId && audioSettings.inputDeviceId !== 'default';
   try {
-    const audio = { ...baseAudio };
+    var audio = Object.assign({}, baseAudio);
     if (wantDevice) audio.deviceId = { ideal: audioSettings.inputDeviceId };
-    rawStream = await navigator.mediaDevices.getUserMedia({ audio });
+    rawStream = await navigator.mediaDevices.getUserMedia({ audio: audio });
   } catch (e) {
     if (e && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError') && wantDevice) {
-      console.warn('Selected mic unavailable, falling back to default:', e);
       audioSettings.inputDeviceId = 'default';
-      rawStream = await navigator.mediaDevices.getUserMedia({ audio: { ...baseAudio } });
-    } else {
-      throw e; // genuine permission/hardware error — let caller surface it
-    }
+      rawStream = await navigator.mediaDevices.getUserMedia({ audio: Object.assign({}, baseAudio) });
+    } else { throw e; }
   }
   return buildAudioPipeline(rawStream);
 }
@@ -982,16 +1104,16 @@ async function getProcessedStream() {
 async function reacquireStream() {
   if (!currentVoice) return;
   try {
-    const oldRaw = rawStream; // save before getProcessedStream overwrites rawStream
-    const newStream = await getProcessedStream();
-    if (oldRaw) oldRaw.getTracks().forEach(t => t.stop()); // FIX: stop old mic track
-    const newTrack = newStream.getAudioTracks()[0];
+    var oldRaw = rawStream;
+    var newStream = await getProcessedStream();
+    if (oldRaw) oldRaw.getTracks().forEach(function(t) { t.stop(); });
+    var newTrack = newStream.getAudioTracks()[0];
     newTrack.enabled = !isMuted && !isServerMuted;
-    Object.values(peers).forEach(pc => {
-      const sender = pc.getSenders().find(s => s.track?.kind === 'audio');
+    Object.values(peers).forEach(function(pc) {
+      var sender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'audio'; });
       if (sender) sender.replaceTrack(newTrack);
     });
-    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    if (localStream) localStream.getTracks().forEach(function(t) { t.stop(); });
     localStream = newStream;
   } catch(e) { console.error('reacquire failed:', e); }
 }
@@ -1000,24 +1122,21 @@ async function reacquireStream() {
 function startLocalVAD() {
   if (localVADLoop) cancelAnimationFrame(localVADLoop);
   if (!localAnalyser) return;
-  const data = new Uint8Array(localAnalyser.frequencyBinCount);
-  let speaking = false, speakTimeout = null;
-
-  const poll = () => {
+  var data = new Uint8Array(localAnalyser.frequencyBinCount);
+  var speaking = false, speakTimeout = null;
+  var poll = function() {
     localAnalyser.getByteFrequencyData(data);
-    let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i];
-    const level = Math.min(sum / data.length / 60, 1);
-
-    const fill = document.getElementById('micMeterFill');
+    var sum = 0; for (var i = 0; i < data.length; i++) sum += data[i];
+    var level = Math.min(sum / data.length / 60, 1);
+    var fill = document.getElementById('micMeterFill');
     if (fill) {
       fill.style.width = (level * 100) + '%';
       fill.style.background = level > 0.8 ? 'var(--red)' : level > 0.5 ? 'var(--yellow)' : 'var(--green)';
     }
-    if (level > 0.04 && !speaking) {
-      speaking = true; setMyVAD(true);
-    } else if (level <= 0.025 && speaking) {
+    if (level > 0.04 && !speaking) { speaking = true; setMyVAD(true); }
+    else if (level <= 0.025 && speaking) {
       clearTimeout(speakTimeout);
-      speakTimeout = setTimeout(() => { speaking = false; setMyVAD(false); }, 350);
+      speakTimeout = setTimeout(function() { speaking = false; setMyVAD(false); }, 350);
     }
     localVADLoop = requestAnimationFrame(poll);
   };
@@ -1028,42 +1147,40 @@ function stopLocalVAD() {
   if (localVADLoop) { cancelAnimationFrame(localVADLoop); localVADLoop = null; }
   localAnalyser = null;
   setMyVAD(false);
-  const fill = document.getElementById('micMeterFill');
+  var fill = document.getElementById('micMeterFill');
   if (fill) fill.style.width = '0%';
 }
 
 function setMyVAD(speaking) {
-  document.querySelectorAll('[data-my-vad]').forEach(el => el.classList.toggle('speaking', speaking));
+  document.querySelectorAll('[data-my-vad]').forEach(function(el) { el.classList.toggle('speaking', speaking); });
 }
 
 // ---- Remote VAD ----
 function startRemoteVAD(peerId, stream) {
   cleanupRemoteVAD(peerId);
   try {
-    const ctx      = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-    const source   = ctx.createMediaStreamSource(stream);
-    const analyser = ctx.createAnalyser();
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume().catch(function() {});
+    var src = ctx.createMediaStreamSource(stream);
+    var analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
-    source.connect(analyser);
-    // Keep the graph pulling data in Chromium (analyser-only on a remote track can idle).
-    const sink = ctx.createGain(); sink.gain.value = 0; source.connect(sink); sink.connect(ctx.destination);
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    let speaking = false, timeout = null;
-    let frameId;
-    const poll = () => {
+    src.connect(analyser);
+    var sink = ctx.createGain(); sink.gain.value = 0; src.connect(sink); sink.connect(ctx.destination);
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    var speaking = false, timeout = null, frameId;
+    var poll = function() {
       analyser.getByteFrequencyData(data);
-      let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i];
-      const avg = sum / data.length;
+      var sum = 0; for (var i = 0; i < data.length; i++) sum += data[i];
+      var avg = sum / data.length;
       if (avg > 10 && !speaking) { speaking = true; setRemoteVAD(peerId, true); }
       else if (avg <= 6 && speaking) {
         clearTimeout(timeout);
-        timeout = setTimeout(() => { speaking = false; setRemoteVAD(peerId, false); }, 350);
+        timeout = setTimeout(function() { speaking = false; setRemoteVAD(peerId, false); }, 350);
       }
       frameId = requestAnimationFrame(poll);
       remoteVAD[peerId].frame = frameId;
     };
-    remoteVAD[peerId] = { ctx, frame: null };
+    remoteVAD[peerId] = { ctx: ctx, frame: null };
     poll();
   } catch(e) { console.warn('Remote VAD failed:', e); }
 }
@@ -1071,60 +1188,60 @@ function startRemoteVAD(peerId, stream) {
 function cleanupRemoteVAD(peerId) {
   if (remoteVAD[peerId]) {
     cancelAnimationFrame(remoteVAD[peerId].frame);
-    remoteVAD[peerId].ctx.close().catch(() => {});
+    remoteVAD[peerId].ctx.close().catch(function() {});
     delete remoteVAD[peerId];
   }
   setRemoteVAD(peerId, false);
 }
 
 function setRemoteVAD(peerId, speaking) {
-  document.querySelectorAll(`[data-vad="${peerId}"]`).forEach(el => el.classList.toggle('speaking', speaking));
+  document.querySelectorAll('[data-vad="' + peerId + '"]').forEach(function(el) { el.classList.toggle('speaking', speaking); });
 }
 
 // ---- Denoise status ----
 function updateDenoiseStatus(state) {
-  const el = document.getElementById('rnnoiseStatus');
+  var el = document.getElementById('rnnoiseStatus');
   if (!el) return;
-  const map = {
-    dfnet:          ['✓ DeepFilterNet3',      'var(--green)'],
-    rnnoise:        ['✓ RNNoise (fallback)',  'var(--green)'],
-    'loading-dfnet':['loading DeepFilterNet3…','var(--yellow)'],
-    'loading-rnnoise':['loading RNNoise…',    'var(--yellow)'],
-    unavailable:    ['⚠ unavailable',         'var(--yellow)'],
-    error:          ['✗ failed',              'var(--red)'],
-    off:            ['off',                   'var(--text-muted)'],
-    loading:        ['loading…',              'var(--yellow)'],
+  var map = {
+    dfnet:            ['✓ DeepFilterNet3',       'var(--green)'],
+    rnnoise:          ['✓ RNNoise (fallback)',    'var(--green)'],
+    'loading-dfnet':  ['loading DeepFilterNet3…', 'var(--yellow)'],
+    'loading-rnnoise':['loading RNNoise…',        'var(--yellow)'],
+    unavailable:      ['⚠ unavailable',           'var(--yellow)'],
+    error:            ['✗ failed',                'var(--red)'],
+    off:              ['off',                     'var(--text-muted)'],
+    loading:          ['loading…',               'var(--yellow)']
   };
-  const [text, color] = map[state] || map.loading;
-  el.textContent = text;
-  el.style.color = color;
+  var entry = map[state] || map.loading;
+  el.textContent = entry[0];
+  el.style.color = entry[1];
 }
 
 // ---- Mic test ----
 async function toggleMicTest() {
   if (testStream) { stopMicTest(); return; }
-  const btn = document.getElementById('micTestBtn');
-  const status = document.getElementById('micTestStatus');
+  var btn = document.getElementById('micTestBtn');
+  var status = document.getElementById('micTestStatus');
   try {
-    const constraints = { audio: {
+    var constraints = { audio: {
       deviceId: audioSettings.inputDeviceId !== 'default' ? { exact: audioSettings.inputDeviceId } : undefined,
       noiseSuppression: audioSettings.noiseSuppression,
       echoCancellation: audioSettings.echoCancellation
     }};
     testStream = await navigator.mediaDevices.getUserMedia(constraints);
     testCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source   = testCtx.createMediaStreamSource(testStream);
-    const gain     = testCtx.createGain(); gain.gain.value = 0.7;
-    const analyser = testCtx.createAnalyser(); analyser.fftSize = 256;
+    var source   = testCtx.createMediaStreamSource(testStream);
+    var gain     = testCtx.createGain(); gain.gain.value = 0.7;
+    var analyser = testCtx.createAnalyser(); analyser.fftSize = 256;
     source.connect(analyser);
     source.connect(gain);
     gain.connect(testCtx.destination);
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    const meter = () => {
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    var meter = function() {
       analyser.getByteFrequencyData(data);
-      let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i];
-      const level = Math.min(sum / data.length / 60, 1);
-      const fill = document.getElementById('micMeterFill');
+      var sum = 0; for (var i = 0; i < data.length; i++) sum += data[i];
+      var level = Math.min(sum / data.length / 60, 1);
+      var fill = document.getElementById('micMeterFill');
       if (fill) {
         fill.style.width = (level * 100) + '%';
         fill.style.background = level > 0.8 ? 'var(--red)' : level > 0.5 ? 'var(--yellow)' : 'var(--green)';
@@ -1134,20 +1251,18 @@ async function toggleMicTest() {
     meter();
     btn.textContent = '⏹ Stop Test'; btn.style.background = 'var(--red)'; btn.style.color = '#fff';
     status.textContent = 'Speak — you should hear yourself back.';
-  } catch(e) {
-    status.textContent = 'Mic error: ' + e.message;
-  }
+  } catch(e) { status.textContent = 'Mic error: ' + e.message; }
 }
 
 function stopMicTest() {
   if (testMeterFrame) { cancelAnimationFrame(testMeterFrame); testMeterFrame = null; }
-  if (testStream) { testStream.getTracks().forEach(t => t.stop()); testStream = null; }
+  if (testStream) { testStream.getTracks().forEach(function(t) { t.stop(); }); testStream = null; }
   if (testCtx)   { testCtx.close(); testCtx = null; }
-  const btn = document.getElementById('micTestBtn');
+  var btn = document.getElementById('micTestBtn');
   if (btn) { btn.textContent = '🎤 Test Mic (hear yourself)'; btn.style.background = ''; btn.style.color = ''; }
-  const status = document.getElementById('micTestStatus');
+  var status = document.getElementById('micTestStatus');
   if (status) status.textContent = '';
-  const fill = document.getElementById('micMeterFill');
+  var fill = document.getElementById('micMeterFill');
   if (fill) fill.style.width = '0%';
 }
 
@@ -1160,7 +1275,7 @@ async function joinVoice(ch) {
     if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError'))
       alert('Microphone blocked. Enable mic access for Rescord in Windows Settings → Privacy → Microphone, then try again.');
     else if (e && e.name === 'NotReadableError')
-      alert('Your microphone is in use by another app (e.g. NVIDIA Broadcast, Zoom). Close it and try again.');
+      alert('Your microphone is in use by another app. Close it and try again.');
     else
       alert('Could not start microphone: ' + (e && e.message ? e.message : e));
     return;
@@ -1177,31 +1292,38 @@ async function joinVoice(ch) {
   document.getElementById('voiceBar').classList.add('active');
   document.getElementById('vbarChannel').textContent = '🔊 ' + ch;
   updateVoiceView(); renderChannels();
+  // Show music player if music is active
+  if (currentMusicState && currentMusicState.playing) updateMusicPlayer(currentMusicState);
 }
 
 function leaveVoice() {
   if (!currentVoice) return;
   sfx('leaveSelf');
   stopScreenShare();
+  stopAudioShare();
   wsSend({ type: 'leave-voice' });
   currentVoice = null;
   Object.keys(peers).forEach(closePeer);
   stopLocalVAD();
-  if (rawStream)   { rawStream.getTracks().forEach(t => t.stop());   rawStream = null; }
-  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  if (rawStream)   { rawStream.getTracks().forEach(function(t) { t.stop(); });   rawStream = null; }
+  if (localStream) { localStream.getTracks().forEach(function(t) { t.stop(); }); localStream = null; }
   if (audioCtx)    { try { audioCtx.close(); } catch(e) {} audioCtx = null; gainNode = null; rnnoiseNode = null; dfnetNode = null; activeDenoiser = 'none'; }
   document.getElementById('voiceBar').classList.remove('active');
   document.getElementById('voiceView').classList.remove('active');
   document.getElementById('chatView').style.display = 'flex';
   document.getElementById('headerPrefix').textContent = '#';
   document.getElementById('headerName').textContent = currentText;
+  // Hide music player
+  var mp = document.getElementById('musicPlayer');
+  if (mp) mp.style.display = 'none';
+  if (ytPlayer) { try { ytPlayer.stopVideo(); } catch(e) {} }
   updateVoiceView(); renderChannels();
 }
 
 function toggleMute() {
   isMuted = !isMuted;
-  if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = !isMuted && !isServerMuted);
-  const btn = document.getElementById('muteBtn');
+  if (localStream) localStream.getAudioTracks().forEach(function(t) { t.enabled = !isMuted && !isServerMuted; });
+  var btn = document.getElementById('muteBtn');
   btn.textContent = isMuted ? '🔇 Unmute' : '🎤 Mute';
   btn.classList.toggle('on', isMuted);
   sfx(isMuted ? 'muteOn' : 'muteOff');
@@ -1209,8 +1331,8 @@ function toggleMute() {
 
 function toggleDeafen() {
   isDeafened = !isDeafened;
-  document.querySelectorAll('audio[id^="audio-"]').forEach(a => a.muted = isDeafened);
-  const btn = document.getElementById('deafBtn');
+  document.querySelectorAll('audio[id^="audio-"]').forEach(function(a) { a.muted = isDeafened; });
+  var btn = document.getElementById('deafBtn');
   btn.textContent = isDeafened ? '🔇 Undeaf' : '🔊 Deaf';
   btn.classList.toggle('on', isDeafened);
   sfx(isDeafened ? 'deafenOn' : 'deafenOff');
@@ -1218,15 +1340,15 @@ function toggleDeafen() {
 
 function updateVoiceView() {
   if (!currentVoice) return;
-  const ps = appState.users.filter(u => u.voiceChannel === currentVoice);
-  const container = document.getElementById('voiceParticipants');
+  var ps = appState.users.filter(function(u) { return u.voiceChannel === currentVoice; });
+  var container = document.getElementById('voiceParticipants');
   container.innerHTML = '';
-  ps.forEach(u => {
-    const card = document.createElement('div');
+  ps.forEach(function(u) {
+    var card = document.createElement('div');
     card.className = 'vp-card';
-    const vadAttr = u.id === myId ? 'data-my-vad="1"' : `data-vad="${u.id}"`;
-    card.innerHTML = `<div class="vp-avatar vad-ring" ${vadAttr}>${avatarInner(u)}</div><div class="vp-name">${esc(u.nickname||'?')}${u.id===appState.hostId?' 👑':''}</div>`;
-    if (u.id !== myId) { card.setAttribute('data-ctx-user', u.id); card.oncontextmenu = e => showUserCtx(e, u.id); card.style.cursor = 'context-menu'; }
+    var vadAttr = u.id === myId ? 'data-my-vad="1"' : 'data-vad="' + u.id + '"';
+    card.innerHTML = '<div class="vp-avatar vad-ring" ' + vadAttr + '>' + avatarInner(u) + '</div><div class="vp-name">' + esc(u.nickname || '?') + (u.id === appState.hostId ? ' 👑' : '') + '</div>';
+    if (u.id !== myId) { card.setAttribute('data-ctx-user', u.id); card.oncontextmenu = (function(uid){ return function(e) { showUserCtx(e, uid); }; })(u.id); card.style.cursor = 'context-menu'; }
     container.appendChild(card);
   });
 }
@@ -1239,21 +1361,21 @@ function hostKick(userId) { if (confirm('Kick this user?')) wsSend({ type: 'host
 function toggleUserMute(userId) {
   if (mutedUsers.has(userId)) {
     mutedUsers.delete(userId);
-    const a = document.getElementById('audio-' + userId);
+    var a = document.getElementById('audio-' + userId);
     if (a) a.muted = false;
   } else {
     mutedUsers.add(userId);
-    const a = document.getElementById('audio-' + userId);
-    if (a) a.muted = true;
+    var a2 = document.getElementById('audio-' + userId);
+    if (a2) a2.muted = true;
   }
   renderMembers(); refreshUserVolumeList();
 }
 
 function setUserVolume(userId, vol) {
   userVolumes[userId] = parseFloat(vol);
-  const a = document.getElementById('audio-' + userId);
+  var a = document.getElementById('audio-' + userId);
   if (a) a.volume = userVolumes[userId];
-  const v = document.getElementById('uvval-' + userId);
+  var v = document.getElementById('uvval-' + userId);
   if (v) v.textContent = Math.round(vol * 100) + '%';
 }
 
@@ -1261,34 +1383,29 @@ function setUserVolume(userId, vol) {
 async function openSettings() {
   document.getElementById('settingsModal').classList.remove('hidden');
   showSection('audio');
-
-  // Reflect current denoiser status each time settings opens
   if (!audioSettings.rnnoiseEnabled) updateDenoiseStatus('off');
-  else if (activeDenoiser === 'dfnet')    updateDenoiseStatus('dfnet');
-  else if (activeDenoiser === 'rnnoise')  updateDenoiseStatus('rnnoise');
-  else if (activeDenoiser === 'none')     updateDenoiseStatus('unavailable');
+  else if (activeDenoiser === 'dfnet')   updateDenoiseStatus('dfnet');
+  else if (activeDenoiser === 'rnnoise') updateDenoiseStatus('rnnoise');
+  else if (activeDenoiser === 'none')    updateDenoiseStatus('unavailable');
   else updateDenoiseStatus('loading');
 
-  // Invite links
-  const base = `http://${lanIp}:${serverPort}`;
-  const lanEl = document.getElementById('inviteLan');
+  var base = 'http://' + lanIp + ':' + serverPort;
+  var lanEl = document.getElementById('inviteLan');
   if (lanEl) lanEl.textContent = base;
-  const ngEl = document.getElementById('ngrokCmd');
-  if (ngEl) ngEl.textContent = `npx localtunnel --port ${serverPort}`;
-  // Cloud URL (Railway deployment)
-  const cloudGroup = document.getElementById('inviteCloudGroup');
-  const cloudEl    = document.getElementById('inviteCloud');
-  const tunnelGroup = document.getElementById('inviteTunnelGroup');
+  var ngEl = document.getElementById('ngrokCmd');
+  if (ngEl) ngEl.textContent = 'npx localtunnel --port ' + serverPort;
+  var cloudGroup = document.getElementById('inviteCloudGroup');
+  var cloudEl    = document.getElementById('inviteCloud');
+  var tunnelGroup = document.getElementById('inviteTunnelGroup');
   if (publicUrl) {
     if (cloudGroup) cloudGroup.style.display = '';
     if (cloudEl)   cloudEl.textContent = publicUrl;
-    if (tunnelGroup) tunnelGroup.style.display = 'none'; // not needed when deployed
+    if (tunnelGroup) tunnelGroup.style.display = 'none';
   } else {
     if (cloudGroup) cloudGroup.style.display = 'none';
     if (tunnelGroup) tunnelGroup.style.display = '';
   }
 
-  // Restore slider/toggle state
   document.getElementById('micGainSlider').value   = audioSettings.micGain;
   document.getElementById('micGainVal').textContent = Math.round(audioSettings.micGain * 100) + '%';
   document.getElementById('outputVolSlider').value  = audioSettings.outputVolume;
@@ -1300,42 +1417,36 @@ async function openSettings() {
   document.getElementById('suppressionSlider').value  = audioSettings.suppressionLevel;
   document.getElementById('suppressionVal').textContent = audioSettings.suppressionLevel + '%';
   document.getElementById('soundsToggle').checked     = audioSettings.sounds;
-  // Profile + Appearance
   document.getElementById('profileNameInput').value = myNickname || '';
   renderMyAvatar();
   renderThemeGrid();
 
-  // Device enumeration — request mic permission first so we get real labels
   try {
-    let perm = null;
+    var perm = null;
     if (!localStream) {
       try { perm = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e) {}
     }
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    if (perm) perm.getTracks().forEach(t => t.stop());
-
-    const inputs  = devices.filter(d => d.kind === 'audioinput');
-    const outputs = devices.filter(d => d.kind === 'audiooutput');
-
-    const inputSel = document.getElementById('inputDeviceSel');
+    var devices = await navigator.mediaDevices.enumerateDevices();
+    if (perm) perm.getTracks().forEach(function(t) { t.stop(); });
+    var inputs  = devices.filter(function(d) { return d.kind === 'audioinput'; });
+    var outputs = devices.filter(function(d) { return d.kind === 'audiooutput'; });
+    var inputSel = document.getElementById('inputDeviceSel');
     inputSel.innerHTML = '<option value="default">Default Microphone</option>';
-    inputs.forEach(d => {
-      const opt = document.createElement('option');
+    inputs.forEach(function(d) {
+      var opt = document.createElement('option');
       opt.value = d.deviceId;
-      opt.textContent = d.label || `Mic (${d.deviceId.slice(0,8)})`;
+      opt.textContent = d.label || 'Mic (' + d.deviceId.slice(0,8) + ')';
       if (d.deviceId === audioSettings.inputDeviceId) opt.selected = true;
       inputSel.appendChild(opt);
     });
-    // NVIDIA Broadcast: show hint if its virtual mic is available
-    const hasBroadcast = inputs.some(d => /nvidia broadcast/i.test(d.label || ''));
-    const bh = document.getElementById('broadcastHint'); if (bh) bh.style.display = hasBroadcast ? '' : 'none';
-
-    const outputSel = document.getElementById('outputDeviceSel');
+    var hasBroadcast = inputs.some(function(d) { return /nvidia broadcast/i.test(d.label || ''); });
+    var bh = document.getElementById('broadcastHint'); if (bh) bh.style.display = hasBroadcast ? '' : 'none';
+    var outputSel = document.getElementById('outputDeviceSel');
     outputSel.innerHTML = '<option value="default">Default Speaker</option>';
-    outputs.forEach(d => {
-      const opt = document.createElement('option');
+    outputs.forEach(function(d) {
+      var opt = document.createElement('option');
       opt.value = d.deviceId;
-      opt.textContent = d.label || `Speaker (${d.deviceId.slice(0,8)})`;
+      opt.textContent = d.label || 'Speaker (' + d.deviceId.slice(0,8) + ')';
       if (d.deviceId === audioSettings.outputDeviceId) opt.selected = true;
       outputSel.appendChild(opt);
     });
@@ -1345,8 +1456,8 @@ async function openSettings() {
 }
 
 function showSection(s) {
-  document.querySelectorAll('.settings-section').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.settings-section').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.settings-nav-item').forEach(function(el) { el.classList.remove('active'); });
   document.getElementById('section-' + s).classList.add('active');
   document.getElementById('nav-' + s).classList.add('active');
   if (s === 'users') refreshUserVolumeList();
@@ -1355,34 +1466,33 @@ function showSection(s) {
 }
 
 function refreshUserVolumeList() {
-  const list = document.getElementById('userVolumeList');
+  var list = document.getElementById('userVolumeList');
   list.innerHTML = '';
-  const others = appState.users.filter(u => u.id !== myId);
+  var others = appState.users.filter(function(u) { return u.id !== myId; });
   if (!others.length) { list.innerHTML = '<p class="settings-desc">No other users online.</p>'; return; }
-  others.forEach(u => {
-    const vol = userVolumes[u.id] ?? 1.0;
-    const muted = mutedUsers.has(u.id);
-    const sm = u.serverMuted;
-    const row = document.createElement('div');
+  others.forEach(function(u) {
+    var vol = userVolumes[u.id] !== undefined ? userVolumes[u.id] : 1.0;
+    var muted = mutedUsers.has(u.id);
+    var sm = u.serverMuted;
+    var row = document.createElement('div');
     row.className = 'user-vol-item';
-    row.innerHTML = `<div class="uv-avatar">${avatarInner(u)}</div>` +
-      `<div class="uv-name">${esc(u.nickname||'?')}${u.id===appState.hostId?' 👑':''}</div>` +
-      `<input type="range" class="uv-vol" min="0" max="2" step="0.05" value="${vol}" oninput="setUserVolume('${u.id}',this.value)">` +
-      `<div class="uv-val" id="uvval-${u.id}">${Math.round(vol*100)}%</div>` +
-      `<button class="uv-btn${muted?' on':''}" onclick="toggleUserMute('${u.id}')">${muted?'🔇':'🔊'}</button>` +
-      (isHost ? `<button class="uv-btn${sm?' on':''}" onclick="hostMute('${u.id}')">${sm?'🚫':'🔈'}</button>` : '');
+    row.innerHTML = '<div class="uv-avatar">' + avatarInner(u) + '</div>' +
+      '<div class="uv-name">' + esc(u.nickname || '?') + (u.id === appState.hostId ? ' 👑' : '') + '</div>' +
+      '<input type="range" class="uv-vol" min="0" max="2" step="0.05" value="' + vol + '" oninput="setUserVolume(\'' + u.id + '\',this.value)">' +
+      '<div class="uv-val" id="uvval-' + u.id + '">' + Math.round(vol * 100) + '%</div>' +
+      '<button class="uv-btn' + (muted ? ' on' : '') + '" onclick="toggleUserMute(\'' + u.id + '\')">' + (muted ? '🔇' : '🔊') + '</button>' +
+      (isHost ? '<button class="uv-btn' + (sm ? ' on' : '') + '" onclick="hostMute(\'' + u.id + '\')">' + (sm ? '🚫' : '🔈') + '</button>' : '');
     list.appendChild(row);
   });
 }
 
 function applyInputDevice() {
-  const sel = document.getElementById('inputDeviceSel');
+  var sel = document.getElementById('inputDeviceSel');
   audioSettings.inputDeviceId = sel.value;
-  // If the NVIDIA Broadcast virtual mic is chosen, disable in-app AI NS to avoid double-processing.
-  const label = (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].textContent) || '';
+  var label = (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].textContent) || '';
   if (/nvidia broadcast/i.test(label) && audioSettings.rnnoiseEnabled) {
     audioSettings.rnnoiseEnabled = false;
-    const t = document.getElementById('rnnoiseToggle'); if (t) t.checked = false;
+    var t = document.getElementById('rnnoiseToggle'); if (t) t.checked = false;
     updateDenoiseStatus('off');
   }
   reacquireStream();
@@ -1390,9 +1500,9 @@ function applyInputDevice() {
 
 async function applyOutputDevice() {
   audioSettings.outputDeviceId = document.getElementById('outputDeviceSel').value;
-  const audios = document.querySelectorAll('audio[id^="audio-"]');
-  for (const a of audios) {
-    if (a.setSinkId) try { await a.setSinkId(audioSettings.outputDeviceId); } catch(e) {}
+  var audios = document.querySelectorAll('audio[id^="audio-"]');
+  for (var i = 0; i < audios.length; i++) {
+    if (audios[i].setSinkId) try { await audios[i].setSinkId(audioSettings.outputDeviceId); } catch(e) {}
   }
 }
 
@@ -1405,8 +1515,8 @@ function updateMicGain(val) {
 function updateOutputVol(val) {
   audioSettings.outputVolume = parseFloat(val);
   document.getElementById('outputVolVal').textContent = Math.round(val * 100) + '%';
-  document.querySelectorAll('audio[id^="audio-"]').forEach(a => {
-    const pid = a.id.replace('audio-', '');
+  document.querySelectorAll('audio[id^="audio-"]').forEach(function(a) {
+    var pid = a.id.replace('audio-', '');
     if (!mutedUsers.has(pid)) a.volume = audioSettings.outputVolume;
   });
 }
@@ -1414,45 +1524,53 @@ function updateOutputVol(val) {
 function updateSuppression(val) {
   audioSettings.suppressionLevel = parseInt(val, 10);
   document.getElementById('suppressionVal').textContent = audioSettings.suppressionLevel + '%';
-  // Apply live to the running DeepFilterNet3 worklet — no stream reconnect needed
   if (dfnetNode) dfnetNode.port.postMessage({ type: 'SET_SUPPRESSION_LEVEL', value: audioSettings.suppressionLevel });
 }
 
-function toggleRNNoise(val)      { audioSettings.rnnoiseEnabled = val;    reacquireStream(); }
-function toggleNoiseSup(val)     { audioSettings.noiseSuppression = val;  reacquireStream(); }
-function toggleEchoCancel(val)   { audioSettings.echoCancellation = val;  reacquireStream(); }
-function toggleAutoGain(val)     { audioSettings.autoGainControl = val;   reacquireStream(); }
+function toggleRNNoise(val)    { audioSettings.rnnoiseEnabled = val;    reacquireStream(); }
+function toggleNoiseSup(val)   { audioSettings.noiseSuppression = val;  reacquireStream(); }
+function toggleEchoCancel(val) { audioSettings.echoCancellation = val;  reacquireStream(); }
+function toggleAutoGain(val)   { audioSettings.autoGainControl = val;   reacquireStream(); }
 
 function copyEl(id) {
-  const el = document.getElementById(id);
-  navigator.clipboard.writeText(el.textContent).then(() => {
-    const btn = el.nextElementSibling;
-    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = '📋 Copy', 2000); }
+  var el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(function() {
+    var btn = el.nextElementSibling;
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(function() { btn.textContent = '📋 Copy'; }, 2000); }
   });
 }
 
 // ---- WebRTC ----
 async function initiateCall(peerId) {
   if (peers[peerId]) return;
-  const pc = makePeer(peerId);
+  var pc = makePeer(peerId);
   peers[peerId] = pc;
-  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-  const offer = await pc.createOffer();
+  if (localStream) localStream.getTracks().forEach(function(t) { pc.addTrack(t, localStream); });
+  // Add audio share track if active
+  if (isSharingAudio && audioShareStream) {
+    var at = audioShareStream.getAudioTracks()[0];
+    if (at) { audioShareSenders[peerId] = pc.addTrack(at, audioShareStream); }
+  }
+  var offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-  wsSend({ type: 'rtc-offer', target: peerId, offer });
+  wsSend({ type: 'rtc-offer', target: peerId, offer: offer });
 }
 
 async function handleOffer(from, offer) {
-  let pc = peers[from];
+  var pc = peers[from];
   if (!pc) {
     pc = makePeer(from);
     peers[from] = pc;
-    if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+    if (localStream) localStream.getTracks().forEach(function(t) { pc.addTrack(t, localStream); });
+    if (isSharingAudio && audioShareStream) {
+      var at = audioShareStream.getAudioTracks()[0];
+      if (at) { audioShareSenders[from] = pc.addTrack(at, audioShareStream); }
+    }
   }
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await pc.createAnswer();
+  var answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
-  wsSend({ type: 'rtc-answer', target: from, answer });
+  wsSend({ type: 'rtc-answer', target: from, answer: answer });
 }
 
 async function handleAnswer(from, answer) {
@@ -1464,16 +1582,16 @@ async function handleIce(from, candidate) {
 }
 
 function makePeer(peerId) {
-  const pc = new RTCPeerConnection(ICE_CFG);
-  pc.onicecandidate = e => { if (e.candidate) wsSend({ type: 'rtc-ice', target: peerId, candidate: e.candidate }); };
-  pc.ontrack = e => {
+  var pc = new RTCPeerConnection(ICE_CFG);
+  pc.onicecandidate = function(e) { if (e.candidate) wsSend({ type: 'rtc-ice', target: peerId, candidate: e.candidate }); };
+  pc.ontrack = function(e) {
     if (e.track.kind === 'video') {
       showScreenPreview(peerId, e.streams[0]);
       sfx('streamStart');
-      e.track.onended = () => { removeScreenPreview(peerId); sfx('streamEnd'); };
+      e.track.onended = function() { removeScreenPreview(peerId); sfx('streamEnd'); };
       return;
     }
-    let audio = document.getElementById('audio-' + peerId);
+    var audio = document.getElementById('audio-' + peerId);
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'audio-' + peerId;
@@ -1481,21 +1599,24 @@ function makePeer(peerId) {
       document.body.appendChild(audio);
     }
     audio.srcObject = e.streams[0];
-    audio.volume = userVolumes[peerId] ?? audioSettings.outputVolume;
+    audio.volume = userVolumes[peerId] !== undefined ? userVolumes[peerId] : audioSettings.outputVolume;
     audio.muted  = isDeafened || mutedUsers.has(peerId);
     if (audioSettings.outputDeviceId !== 'default' && audio.setSinkId)
-      audio.setSinkId(audioSettings.outputDeviceId).catch(() => {});
+      audio.setSinkId(audioSettings.outputDeviceId).catch(function() {});
     startRemoteVAD(peerId, e.streams[0]);
   };
-  pc.onconnectionstatechange = () => {
-    if (['failed','closed'].includes(pc.connectionState)) closePeer(peerId);
+  pc.onconnectionstatechange = function() {
+    if (pc.connectionState === 'failed' || pc.connectionState === 'closed') closePeer(peerId);
   };
   return pc;
 }
 
 function closePeer(peerId) {
+  // Clean up audio share sender for this peer
+  if (audioShareSenders[peerId]) { delete audioShareSenders[peerId]; }
   if (peers[peerId]) { peers[peerId].close(); delete peers[peerId]; }
-  document.getElementById('audio-' + peerId)?.remove();
+  var audioEl = document.getElementById('audio-' + peerId);
+  if (audioEl) audioEl.remove();
   removeScreenPreview(peerId);
   cleanupRemoteVAD(peerId);
 }
@@ -1508,8 +1629,6 @@ function esc(s) {
 async function toggleScreenShare() {
   if (isSharingScreen) { stopScreenShare(); return; }
   try {
-    // Try with system audio (Electron loopback / browser tab audio); if that combo is
-    // rejected on this machine, fall back to video-only so the feature still works.
     try {
       screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
     } catch (audioErr) {
@@ -1518,50 +1637,92 @@ async function toggleScreenShare() {
     }
     isSharingScreen = true;
     sfx('streamStart');
-    const btn = document.getElementById('shareBtn');
+    var btn = document.getElementById('shareBtn');
     if (btn) { btn.textContent = '🛑 Stop Share'; btn.classList.add('on'); }
-    const videoTrack = screenStream.getVideoTracks()[0];
-    for (const [pid, pc] of Object.entries(peers)) {
+    var videoTrack = screenStream.getVideoTracks()[0];
+    for (var pid in peers) {
+      var pc = peers[pid];
       pc.addTrack(videoTrack, screenStream);
-      const offer = await pc.createOffer();
+      var offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      wsSend({ type: 'rtc-offer', target: pid, offer });
+      wsSend({ type: 'rtc-offer', target: pid, offer: offer });
     }
     showScreenPreview('local', screenStream);
-    videoTrack.onended = () => stopScreenShare();
+    videoTrack.onended = function() { stopScreenShare(); };
   } catch(e) {
-    // NotAllowedError = user cancelled the picker → stay silent. Anything else is a real failure.
     if (e && e.name === 'NotAllowedError') { console.log('Screen share cancelled by user'); }
-    else { console.error('Screen share failed:', e); alert('Screen share failed: ' + (e?.message || e)); }
+    else { console.error('Screen share failed:', e); alert('Screen share failed: ' + (e ? e.message : e)); }
   }
 }
 
 function stopScreenShare() {
   if (!isSharingScreen && !screenStream) return;
-  if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+  if (screenStream) { screenStream.getTracks().forEach(function(t) { t.stop(); }); screenStream = null; }
   isSharingScreen = false;
   sfx('streamEnd');
-  const btn = document.getElementById('shareBtn');
+  var btn = document.getElementById('shareBtn');
   if (btn) { btn.textContent = '🖥 Share Screen'; btn.classList.remove('on'); }
-  Object.values(peers).forEach(pc => {
-    const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+  Object.values(peers).forEach(function(pc) {
+    var sender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'video'; });
     if (sender) try { pc.removeTrack(sender); } catch(e) {}
   });
   removeScreenPreview('local');
 }
 
+// ---- Audio-only Share ----
+async function toggleAudioShare() {
+  if (isSharingAudio) { stopAudioShare(); return; }
+  try {
+    audioShareStream = await navigator.mediaDevices.getDisplayMedia({ video: false, audio: true });
+    var audioTrack = audioShareStream.getAudioTracks()[0];
+    if (!audioTrack) { audioShareStream.getTracks().forEach(function(t){t.stop();}); audioShareStream = null; alert('No audio track captured.'); return; }
+    isSharingAudio = true;
+    var btn = document.getElementById('audioShareBtn');
+    if (btn) { btn.textContent = '🔴 Stop Audio'; btn.style.background = 'var(--red)'; btn.style.color = '#fff'; }
+    // Add to all existing peers
+    for (var pid in peers) {
+      var pc = peers[pid];
+      audioShareSenders[pid] = pc.addTrack(audioTrack, audioShareStream);
+      var offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      wsSend({ type: 'rtc-offer', target: pid, offer: offer });
+    }
+    audioTrack.onended = function() { stopAudioShare(); };
+    sfx('streamStart');
+  } catch(e) {
+    if (e && e.name === 'NotAllowedError') { console.log('Audio share cancelled'); }
+    else { console.error('Audio share failed:', e); alert('Audio share failed: ' + (e ? e.message : e)); }
+  }
+}
+
+function stopAudioShare() {
+  if (!isSharingAudio && !audioShareStream) return;
+  if (audioShareStream) { audioShareStream.getTracks().forEach(function(t){t.stop();}); audioShareStream = null; }
+  isSharingAudio = false;
+  var btn = document.getElementById('audioShareBtn');
+  if (btn) { btn.textContent = '🔊 Audio'; btn.style.background = 'var(--bg-active)'; btn.style.color = 'var(--text-primary)'; }
+  // Remove senders from all peers
+  for (var pid in audioShareSenders) {
+    if (peers[pid] && audioShareSenders[pid]) {
+      try { peers[pid].removeTrack(audioShareSenders[pid]); } catch(e) {}
+    }
+  }
+  audioShareSenders = {};
+  sfx('streamEnd');
+}
+
 function showScreenPreview(id, stream) {
-  const grid = document.getElementById('screenGrid');
+  var grid = document.getElementById('screenGrid');
   if (!grid) return;
-  let wrap = document.getElementById('screen-' + id);
+  var wrap = document.getElementById('screen-' + id);
   if (!wrap) {
     wrap = document.createElement('div');
     wrap.id = 'screen-' + id;
     wrap.style.cssText = 'background:#000;border-radius:8px;overflow:hidden;margin-bottom:8px';
-    const lbl = document.createElement('div');
-    lbl.textContent = id === 'local' ? 'You' : (appState.users.find(u => u.id === id)?.nickname || id);
+    var lbl = document.createElement('div');
+    lbl.textContent = id === 'local' ? 'You' : ((appState.users.find(function(u){return u.id===id;})||{}).nickname || id);
     lbl.style.cssText = 'padding:4px 8px;font-size:12px;color:var(--text-muted)';
-    const video = document.createElement('video');
+    var video = document.createElement('video');
     video.autoplay = true;
     video.muted = (id === 'local');
     video.style.cssText = 'width:100%;height:auto;display:block;max-height:480px;object-fit:contain';
@@ -1574,40 +1735,116 @@ function showScreenPreview(id, stream) {
 }
 
 function removeScreenPreview(id) {
-  document.getElementById('screen-' + id)?.remove();
+  var el = document.getElementById('screen-' + id);
+  if (el) el.remove();
   updateScreenGrid();
 }
 
 function updateScreenGrid() {
-  const grid = document.getElementById('screenGrid');
+  var grid = document.getElementById('screenGrid');
   if (grid) grid.style.display = grid.children.length > 0 ? 'block' : 'none';
+}
+
+// ---- Music bot ----
+function loadYouTubeAPI() {
+  if (ytLoaded) return;
+  ytLoaded = true;
+  var tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+}
+
+window.onYouTubeIframeAPIReady = function() {
+  ytReady = true;
+  ytPlayer = new YT.Player('ytPlayer', {
+    width: '160', height: '90',
+    playerVars: { autoplay: 0, controls: 1, rel: 0, modestbranding: 1 },
+    events: {
+      onReady: function() { ytReady = true; if (currentMusicState) syncYouTube(currentMusicState); },
+      onError: function(e) { console.warn('[YouTube] player error:', e.data); }
+    }
+  });
+};
+
+function musicCmd(cmd) {
+  wsSend({ type: 'music-command', command: cmd });
+}
+
+function handleMusicState(state) {
+  currentMusicState = state;
+  if (currentVoice) {
+    updateMusicPlayer(state);
+    syncYouTube(state);
+  }
+}
+
+function updateMusicPlayer(state) {
+  var mp = document.getElementById('musicPlayer');
+  if (!mp) return;
+  if (!state || (!state.playing && !state.videoId && !state.search)) {
+    mp.style.display = 'none';
+    return;
+  }
+  mp.style.display = 'flex';
+  var thumb = document.getElementById('musicThumb');
+  var title = document.getElementById('musicTitle');
+  var sub   = document.getElementById('musicSub');
+  if (state.videoId) {
+    if (thumb) thumb.src = 'https://img.youtube.com/vi/' + state.videoId + '/mqdefault.jpg';
+    if (title) title.textContent = state.videoId;
+    if (sub) sub.sub = state.playing ? 'Playing' : 'Paused';
+  } else if (state.search) {
+    if (thumb) thumb.src = '';
+    if (title) title.textContent = state.search;
+  }
+  if (sub) sub.textContent = state.playing ? 'Playing' : 'Paused';
+}
+
+function syncYouTube(state) {
+  if (!state || !state.videoId) {
+    if (ytPlayer && typeof ytPlayer.stopVideo === 'function') { try { ytPlayer.stopVideo(); } catch(e) {} }
+    return;
+  }
+  // Load YT API if not yet
+  if (!ytLoaded) { loadYouTubeAPI(); return; }
+  if (!ytReady || !ytPlayer || typeof ytPlayer.loadVideoById !== 'function') return;
+  var seekTo = 0;
+  if (state.playing && state.startedAt) {
+    seekTo = (Date.now() - state.startedAt) / 1000 + (state.pausedOffset || 0);
+  } else {
+    seekTo = state.pausedOffset || 0;
+  }
+  try {
+    ytPlayer.loadVideoById({ videoId: state.videoId, startSeconds: Math.max(0, seekTo) });
+    if (!state.playing) { setTimeout(function(){ try { ytPlayer.pauseVideo(); } catch(e){} }, 500); }
+  } catch(e) { console.warn('[YouTube] sync error:', e); }
 }
 
 // ===== Avatars =====
 function avatarInner(user) {
-  if (user && user.avatar) return `<img class="av-img" src="${user.avatar}" alt="">`;
+  if (user && user.avatar) return '<img class="av-img" src="' + user.avatar + '" alt="">';
   return (((user && user.nickname) || '?')[0] || '?').toUpperCase();
 }
 function renderMyAvatar() {
-  const inner = myAvatar ? `<img class="av-img" src="${myAvatar}" alt="">` : (((myNickname || '?')[0] || '?').toUpperCase());
-  const a = document.getElementById('myAvatar'); if (a) a.innerHTML = inner;
-  const b = document.getElementById('profileBigAv'); if (b) b.innerHTML = inner;
+  var inner = myAvatar ? '<img class="av-img" src="' + myAvatar + '" alt="">' : (((myNickname || '?')[0] || '?').toUpperCase());
+  var a = document.getElementById('myAvatar'); if (a) a.innerHTML = inner;
+  var b = document.getElementById('profileBigAv'); if (b) b.innerHTML = inner;
 }
 function sendAvatar() { wsSend({ type: 'set-avatar', avatar: myAvatar }); }
 function onAvatarPicked(ev) {
-  const file = ev.target.files && ev.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const size = 128, c = document.createElement('canvas'); c.width = c.height = size;
-      const ctx = c.getContext('2d');
-      const s = Math.min(img.width, img.height);
+  var file = ev.target.files && ev.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var size = 128, c = document.createElement('canvas'); c.width = c.height = size;
+      var ctx = c.getContext('2d');
+      var s = Math.min(img.width, img.height);
       ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
-      let dataUrl = c.toDataURL('image/jpeg', 0.85);
+      var dataUrl = c.toDataURL('image/jpeg', 0.85);
       if (dataUrl.length > 180000) dataUrl = c.toDataURL('image/jpeg', 0.6);
       myAvatar = dataUrl;
-      try { localStorage.setItem('rescord_avatar', dataUrl); } catch (e) {}
+      try { localStorage.setItem('rescord_avatar', dataUrl); } catch (e2) {}
       sendAvatar(); renderMyAvatar(); renderMembers(); updateVoiceView();
     };
     img.src = e.target.result;
@@ -1621,7 +1858,7 @@ function removeAvatar() {
   sendAvatar(); renderMyAvatar(); renderMembers(); updateVoiceView();
 }
 function saveDisplayName() {
-  const v = document.getElementById('profileNameInput').value.trim().slice(0, 32);
+  var v = document.getElementById('profileNameInput').value.trim().slice(0, 32);
   if (!v) return;
   myNickname = v;
   document.getElementById('myName').textContent = v;
@@ -1630,8 +1867,8 @@ function saveDisplayName() {
 }
 
 // ===== UI Sounds (synthesized) =====
-let sfxCtx = null;
-const SFX = {
+var sfxCtx = null;
+var SFX = {
   joinSelf:   [{f:392,f2:587,d:.12,t:0,v:.18},{f:587,f2:784,d:.13,t:.1,v:.18}],
   leaveSelf:  [{f:587,f2:392,d:.14,t:0,v:.18},{f:392,f2:262,d:.14,t:.12,v:.16}],
   userJoin:   [{f:523,f2:698,d:.12,t:0,v:.13}],
@@ -1645,19 +1882,19 @@ const SFX = {
 };
 function sfx(name) {
   if (!audioSettings.sounds) return;
-  const seq = SFX[name]; if (!seq) return;
+  var seq = SFX[name]; if (!seq) return;
   try {
     if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (sfxCtx.state === 'suspended') sfxCtx.resume();
-    const t0 = sfxCtx.currentTime;
-    seq.forEach(s => {
-      const o = sfxCtx.createOscillator(), g = sfxCtx.createGain();
+    var t0 = sfxCtx.currentTime;
+    seq.forEach(function(s) {
+      var o = sfxCtx.createOscillator(), g = sfxCtx.createGain();
       o.type = s.type || 'sine';
-      const st = t0 + s.t, en = st + s.d;
+      var st = t0 + s.t, en = st + s.d;
       o.frequency.setValueAtTime(s.f, st);
       if (s.f2) o.frequency.exponentialRampToValueAtTime(Math.max(1, s.f2), en);
       g.gain.setValueAtTime(0.0001, st);
-      g.gain.exponentialRampToValueAtTime(s.v ?? .15, st + 0.012);
+      g.gain.exponentialRampToValueAtTime(s.v || .15, st + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, en);
       o.connect(g); g.connect(sfxCtx.destination);
       o.start(st); o.stop(en + 0.03);
@@ -1671,7 +1908,7 @@ function toggleSounds(v) {
 }
 
 // ===== Themes =====
-const THEME_META = [
+var THEME_META = [
   { id:'mint',     name:'Mint',     cols:['#0d0d0d','#182820','#6ECBA4','#FFCB9A'] },
   { id:'graphite', name:'Graphite', cols:['#1e1f22','#313338','#5865f2','#23a55a'] },
   { id:'ocean',    name:'Ocean',    cols:['#0f1620','#1d2a38','#4aa3df','#4ec9a8'] },
@@ -1679,55 +1916,55 @@ const THEME_META = [
   { id:'light',    name:'Light',    cols:['#ffffff','#e3e5e8','#5865f2','#1a8a4e'] }
 ];
 function applyTheme(t) {
-  if (!THEME_META.some(m => m.id === t)) t = 'mint';
+  if (!THEME_META.some(function(m){return m.id===t;})) t = 'mint';
   document.documentElement.setAttribute('data-theme', t);
   audioSettings.theme = t;
   try { localStorage.setItem('rescord_theme', t); } catch (e) {}
-  document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
+  document.querySelectorAll('.theme-swatch').forEach(function(el) { el.classList.toggle('active', el.dataset.theme === t); });
 }
 function renderThemeGrid() {
-  const g = document.getElementById('themeGrid'); if (!g) return;
+  var g = document.getElementById('themeGrid'); if (!g) return;
   g.innerHTML = '';
-  THEME_META.forEach(m => {
-    const el = document.createElement('div');
+  THEME_META.forEach(function(m) {
+    var el = document.createElement('div');
     el.className = 'theme-swatch' + (m.id === audioSettings.theme ? ' active' : '');
     el.dataset.theme = m.id;
-    el.innerHTML = `<div class="sw-bar">${m.cols.map(c => `<i style="background:${c}"></i>`).join('')}</div><div class="sw-name">${m.name}</div>`;
-    el.onclick = () => applyTheme(m.id);
+    el.innerHTML = '<div class="sw-bar">' + m.cols.map(function(c){return '<i style="background:'+c+'"></i>';}).join('') + '</div><div class="sw-name">' + m.name + '</div>';
+    el.onclick = (function(mid){ return function() { applyTheme(mid); }; })(m.id);
     g.appendChild(el);
   });
 }
 
-// ===== Right-click user → per-user volume =====
+// ===== Right-click user context menu =====
 function showUserCtx(ev, userId) {
   ev.preventDefault(); ev.stopPropagation();
   if (userId === myId) return;
-  const u = appState.users.find(x => x.id === userId); if (!u) return;
-  const vol = userVolumes[userId] ?? audioSettings.outputVolume;
-  const muted = mutedUsers.has(userId);
-  const menu = document.getElementById('ctxMenu');
+  var u = appState.users.find(function(x){return x.id===userId;}); if (!u) return;
+  var vol = userVolumes[userId] !== undefined ? userVolumes[userId] : audioSettings.outputVolume;
+  var muted = mutedUsers.has(userId);
+  var menu = document.getElementById('ctxMenu');
   menu.innerHTML =
-    `<div class="ctx-name">${esc(u.nickname || '?')}</div>` +
-    `<div class="ctx-row"><span>Incoming volume</span><span id="ctxVolVal">${Math.round(vol * 100)}%</span></div>` +
-    `<input type="range" min="0" max="2" step="0.05" value="${vol}" oninput="ctxSetVol('${userId}',this.value)">` +
-    `<button class="ctx-btn" onclick="ctxToggleMute('${userId}')">${muted ? '🔊 Unmute user' : '🔇 Mute user'}</button>`;
+    '<div class="ctx-name">' + esc(u.nickname || '?') + '</div>' +
+    '<div class="ctx-row"><span>Incoming volume</span><span id="ctxVolVal">' + Math.round(vol * 100) + '%</span></div>' +
+    '<input type="range" min="0" max="2" step="0.05" value="' + vol + '" oninput="ctxSetVol(\'' + userId + '\',this.value)">' +
+    '<button class="ctx-btn" onclick="ctxToggleMute(\'' + userId + '\')">' + (muted ? '🔊 Unmute user' : '🔇 Mute user') + '</button>';
   menu.style.display = 'block';
-  const mw = 210, mh = menu.offsetHeight || 150;
+  var mw = 210, mh = menu.offsetHeight || 150;
   menu.style.left = Math.min(ev.clientX, window.innerWidth - mw - 8) + 'px';
-  menu.style.top = Math.min(ev.clientY, window.innerHeight - mh - 8) + 'px';
+  menu.style.top  = Math.min(ev.clientY, window.innerHeight - mh - 8) + 'px';
 }
-function ctxSetVol(id, v) { setUserVolume(id, v); const el = document.getElementById('ctxVolVal'); if (el) el.textContent = Math.round(v * 100) + '%'; }
+function ctxSetVol(id, v) { setUserVolume(id, v); var el = document.getElementById('ctxVolVal'); if (el) el.textContent = Math.round(v * 100) + '%'; }
 function ctxToggleMute(id) { toggleUserMute(id); hideCtx(); }
-function hideCtx() { const m = document.getElementById('ctxMenu'); if (m) m.style.display = 'none'; }
-document.getElementById('ctxMenu').addEventListener('click', e => e.stopPropagation());
+function hideCtx() { var m = document.getElementById('ctxMenu'); if (m) m.style.display = 'none'; }
+document.getElementById('ctxMenu').addEventListener('click', function(e) { e.stopPropagation(); });
 document.addEventListener('click', hideCtx);
 window.addEventListener('blur', hideCtx);
-document.addEventListener('contextmenu', e => { if (!e.target.closest('[data-ctx-user]')) hideCtx(); });
+document.addEventListener('contextmenu', function(e) { if (!e.target.closest('[data-ctx-user]')) hideCtx(); });
 
-// ===== Init theme + avatar on load =====
+// ===== Init =====
 applyTheme(audioSettings.theme);
 renderMyAvatar();
-{ const st = document.getElementById('soundsToggle'); if (st) st.checked = audioSettings.sounds; }
+(function(){ var st = document.getElementById('soundsToggle'); if (st) st.checked = audioSettings.sounds; })();
 
 wsConnect();
 </script>
