@@ -794,7 +794,22 @@ function buildAudioPipeline(stream) {
 async function _buildAudioPipeline(stream) {
   // Close previous context
   if (audioCtx) { try { audioCtx.close(); } catch(e) {} }
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Pin to 48 kHz: BOTH denoisers are 48k-native (RNNoise = 480-sample/10ms frames,
+  // DeepFilterNet3 model hop = 480 @48k). On a 44.1 kHz device the frame timing is off
+  // ~9% and suppression collapses to near-passthrough — audio flows, no NS. Forcing the
+  // context rate makes the browser resample the mic into 48k so the models see correct audio.
+  const AC = window.AudioContext || window.webkitAudioContext;
+  try {
+    audioCtx = new AC({ sampleRate: 48000 });
+    if (audioCtx.sampleRate !== 48000) { // device refused; tear down and use default
+      try { audioCtx.close(); } catch(e) {}
+      audioCtx = new AC();
+      console.warn('[denoise] 48k context unavailable, running at', audioCtx.sampleRate, 'Hz — suppression may be degraded');
+    }
+  } catch (e) {
+    audioCtx = new AC();
+    console.warn('[denoise] sampleRate:48000 rejected, running at', audioCtx.sampleRate, 'Hz:', e);
+  }
   if (audioCtx.state === 'suspended') { try { await audioCtx.resume(); } catch(e) {} }
 
   gainNode      = audioCtx.createGain();
