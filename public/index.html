@@ -528,6 +528,7 @@ let localStream = null, rawStream = null;
 let audioCtx = null, gainNode = null, localAnalyser = null, rnnoiseNode = null, dfnetNode = null;
 let dfnetAssets = null; // cached { wasmBytes, modelBytes } for DeepFilterNet3
 let activeDenoiser = 'none'; // 'dfnet' | 'rnnoise' | 'off' | 'none'
+let dfnetGivenUp = false; // set true if DFNet3 fails at runtime → use RNNoise instead (never passthrough)
 
 // Fetch DeepFilterNet3 assets once (self-hosted under /dfnet/). We pass the raw wasm
 // bytes (not a pre-compiled WebAssembly.Module) so the worklet compiles it itself —
@@ -797,7 +798,7 @@ async function buildAudioPipeline(stream) {
   if (audioSettings.rnnoiseEnabled) {
     let connected = false;
     // --- Primary denoiser: DeepFilterNet3 (deep filtering; ~20dB+ noise cut, speech preserved) ---
-    try {
+    if (!dfnetGivenUp) try {
       const { wasmBytes, modelBytes } = await loadDFNet3Assets();
       await audioCtx.audioWorklet.addModule('/dfnet/dfnet3-worklet.js');
       dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', {
@@ -811,7 +812,9 @@ async function buildAudioPipeline(stream) {
           console.error('[DFNet3] worklet init failed:', msg);
           window.__dfnetError = msg;
           const el = document.getElementById('rnnoiseStatus');
-          if (el) { el.textContent = '⚠ DFNet3: ' + msg.slice(0, 90); el.style.color = 'var(--red)'; el.title = msg; }
+          if (el) { el.title = msg; }
+          // Never leave the mic in passthrough — fall back to RNNoise immediately.
+          if (!dfnetGivenUp) { dfnetGivenUp = true; console.warn('[DFNet3] falling back to RNNoise'); reacquireStream(); }
         }
       };
       source.connect(dfnetNode);
@@ -925,15 +928,27 @@ registerProcessor('rnnoise-processor', RNNoiseProcessor);
 }
 
 async function getProcessedStream() {
-  const constraints = { audio: {
+  const baseAudio = {
     noiseSuppression: audioSettings.noiseSuppression,
     echoCancellation: audioSettings.echoCancellation,
     autoGainControl:  audioSettings.autoGainControl
-  }};
-  if (audioSettings.inputDeviceId && audioSettings.inputDeviceId !== 'default') {
-    constraints.audio.deviceId = { exact: audioSettings.inputDeviceId };
+  };
+  const wantDevice = audioSettings.inputDeviceId && audioSettings.inputDeviceId !== 'default';
+  // Use { ideal } (not { exact }) so a missing/changed device — e.g. NVIDIA Broadcast not
+  // running — does NOT hard-fail with OverconstrainedError. Retry on default if it still fails.
+  try {
+    const audio = { ...baseAudio };
+    if (wantDevice) audio.deviceId = { ideal: audioSettings.inputDeviceId };
+    rawStream = await navigator.mediaDevices.getUserMedia({ audio });
+  } catch (e) {
+    if (e && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError') && wantDevice) {
+      console.warn('Selected mic unavailable, falling back to default:', e);
+      audioSettings.inputDeviceId = 'default';
+      rawStream = await navigator.mediaDevices.getUserMedia({ audio: { ...baseAudio } });
+    } else {
+      throw e; // genuine permission/hardware error — let caller surface it
+    }
   }
-  rawStream = await navigator.mediaDevices.getUserMedia(constraints);
   return buildAudioPipeline(rawStream);
 }
 
@@ -1113,7 +1128,16 @@ function stopMicTest() {
 async function joinVoice(ch) {
   if (currentVoice === ch) { leaveVoice(); return; }
   try { localStream = await getProcessedStream(); }
-  catch(e) { alert('Mic access denied — cannot join voice.'); return; }
+  catch(e) {
+    console.error('join voice mic error:', e);
+    if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError'))
+      alert('Microphone blocked. Enable mic access for Rescord in Windows Settings → Privacy → Microphone, then try again.');
+    else if (e && e.name === 'NotReadableError')
+      alert('Your microphone is in use by another app (e.g. NVIDIA Broadcast, Zoom). Close it and try again.');
+    else
+      alert('Could not start microphone: ' + (e && e.message ? e.message : e));
+    return;
+  }
   if (currentVoice) { Object.keys(peers).forEach(closePeer); wsSend({ type: 'leave-voice' }); }
   currentVoice = ch;
   sfx('joinSelf');
