@@ -782,7 +782,16 @@ document.getElementById('newTextInput').onkeydown  = e => { if (e.key==='Enter')
 document.getElementById('newVoiceInput').onkeydown = e => { if (e.key==='Enter') submitNewVoice(); if (e.key==='Escape') closeModal('addVoiceModal'); };
 
 // ---- Audio pipeline ----
-async function buildAudioPipeline(stream) {
+// Serialize pipeline builds: an AudioContext + its nodes must never interleave with another
+// build (a 2nd build mid-await would swap module-scope audioCtx/gainNode and cause
+// "cannot connect to an AudioNode belonging to a different audio context").
+let _pipelineChain = Promise.resolve();
+function buildAudioPipeline(stream) {
+  const next = _pipelineChain.then(() => _buildAudioPipeline(stream), () => _buildAudioPipeline(stream));
+  _pipelineChain = next.catch(() => {});
+  return next;
+}
+async function _buildAudioPipeline(stream) {
   // Close previous context
   if (audioCtx) { try { audioCtx.close(); } catch(e) {} }
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
