@@ -7,8 +7,9 @@
     "start": "node server.js",
     "app": "electron .",
     "app:cloud": "cross-env RESCORD_URL=https://content-balance-production-cd65.up.railway.app electron .",
-    "build": "electron-builder --win portable",
-    "build:installer": "electron-builder --win nsis"
+    "verify": "node scripts/verify.js",
+    "build": "node scripts/verify.js && electron-builder --win portable",
+    "build:installer": "node scripts/verify.js && electron-builder --win nsis"
   },
   "keywords": [],
   "author": "Marco",

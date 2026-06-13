@@ -2,6 +2,17 @@
 echo Removing stale git lock...
 del /f ".git\index.lock" 2>nul
 
+echo Running QA verification (compile diagnosis)...
+call node scripts\verify.js
+if errorlevel 1 (
+  echo.
+  echo ============================================
+  echo  QA FAILED - push aborted. Fix errors above.
+  echo ============================================
+  pause
+  exit /b 1
+)
+
 echo Staging changes...
 git add -A
 
