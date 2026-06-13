@@ -9,18 +9,18 @@
 <meta name="theme-color" content="#5865f2">
 <style>
 :root {
-  --bg-primary:#313338; --bg-secondary:#2b2d31; --bg-tertiary:#1e1f22;
-  --bg-hover:#35373c; --bg-active:#404249;
-  --text-primary:#f2f3f5; --text-muted:#949ba4; --text-channel:#8e9297;
-  --accent:#5865f2; --accent-hover:#4752c4;
-  --green:#23a55a; --red:#ed4245; --yellow:#f0b232; --border:#3f4147;
+  --bg-primary:#0d0d0d; --bg-secondary:#111d18; --bg-tertiary:#182820;
+  --bg-hover:#1e3328; --bg-active:#243d30;
+  --text-primary:#C8F7DC; --text-muted:#6ECBA4; --text-channel:#8dc9b0;
+  --accent:#FFCB9A; --accent-hover:#e8b587;
+  --green:#6ECBA4; --red:#e05c5c; --yellow:#FFCB9A; --border:#1d3328;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-primary);color:var(--text-primary);display:flex;height:100vh;overflow:hidden}
 
 /* VAD ring */
 .vad-ring{transition:box-shadow .1s ease;border-radius:50%}
-.vad-ring.speaking{box-shadow:0 0 0 2.5px var(--green),0 0 6px rgba(35,165,90,.4)}
+.vad-ring.speaking{box-shadow:0 0 0 2.5px var(--green),0 0 6px rgba(110,203,164,.4)}
 
 /* Modals */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:200}
@@ -382,9 +382,13 @@ audio{display:none}
     </div>
   </div>
   <div id="voiceView">
+    <div id="screenGrid" style="display:none;width:100%;max-width:900px;padding:0 16px;box-sizing:border-box"></div>
     <div class="voice-ch-name" id="voiceChannelTitle">🔊 General Voice</div>
     <div class="voice-participants" id="voiceParticipants"></div>
-    <button class="vbar-btn disc-btn" style="padding:10px 24px;font-size:14px;flex:none" onclick="leaveVoice()">Disconnect</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="vbar-btn" id="shareBtn" onclick="toggleScreenShare()" style="padding:10px 16px;font-size:14px">🖥 Share Screen</button>
+      <button class="vbar-btn disc-btn" style="padding:10px 24px;font-size:14px;flex:none" onclick="leaveVoice()">Disconnect</button>
+    </div>
   </div>
 </div>
 
@@ -396,14 +400,21 @@ audio{display:none}
 
 <script>
 // ---- Config ----
-const ICE_CFG = { iceServers: [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun.relay.metered.ca:80' },
-  { urls: 'turn:openrelay.metered.ca:80',              username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443',             username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-]};
+const ICE_CFG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'turn:openrelay.metered.ca:80',               username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turns:openrelay.metered.ca:443',             username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp',username: 'openrelayproject', credential: 'openrelayproject' }
+  ],
+  bundlePolicy: 'max-bundle',
+  iceCandidatePoolSize: 10
+};
 
 // ---- State ----
 let ws, myId, myNickname = '';
@@ -416,6 +427,7 @@ let history = {}, lanIp = location.hostname, serverPort = 3000, publicUrl = null
 const peers = {};
 let localStream = null, rawStream = null;
 let audioCtx = null, gainNode = null, localAnalyser = null, rnnoiseNode = null;
+let screenStream = null, isSharingScreen = false;
 let localVADLoop = null;
 const remoteVAD = {}; // peerId -> { ctx, frame }
 
@@ -891,6 +903,7 @@ async function joinVoice(ch) {
 
 function leaveVoice() {
   if (!currentVoice) return;
+  stopScreenShare();
   wsSend({ type: 'leave-voice' });
   currentVoice = null;
   Object.keys(peers).forEach(closePeer);
@@ -1124,10 +1137,12 @@ async function initiateCall(peerId) {
 }
 
 async function handleOffer(from, offer) {
-  if (peers[from]) peers[from].close();
-  const pc = makePeer(from);
-  peers[from] = pc;
-  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  let pc = peers[from];
+  if (!pc) {
+    pc = makePeer(from);
+    peers[from] = pc;
+    if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  }
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
@@ -1146,6 +1161,11 @@ function makePeer(peerId) {
   const pc = new RTCPeerConnection(ICE_CFG);
   pc.onicecandidate = e => { if (e.candidate) wsSend({ type: 'rtc-ice', target: peerId, candidate: e.candidate }); };
   pc.ontrack = e => {
+    if (e.track.kind === 'video') {
+      showScreenPreview(peerId, e.streams[0]);
+      e.track.onended = () => removeScreenPreview(peerId);
+      return;
+    }
     let audio = document.getElementById('audio-' + peerId);
     if (!audio) {
       audio = document.createElement('audio');
@@ -1161,7 +1181,7 @@ function makePeer(peerId) {
     startRemoteVAD(peerId, e.streams[0]);
   };
   pc.onconnectionstatechange = () => {
-    if (['disconnected','failed','closed'].includes(pc.connectionState)) closePeer(peerId);
+    if (['failed','closed'].includes(pc.connectionState)) closePeer(peerId);
   };
   return pc;
 }
@@ -1169,6 +1189,7 @@ function makePeer(peerId) {
 function closePeer(peerId) {
   if (peers[peerId]) { peers[peerId].close(); delete peers[peerId]; }
   document.getElementById('audio-' + peerId)?.remove();
+  removeScreenPreview(peerId);
   cleanupRemoteVAD(peerId);
 }
 
@@ -1176,11 +1197,73 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ---- Screen Share ----
+async function toggleScreenShare() {
+  if (isSharingScreen) { stopScreenShare(); return; }
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    isSharingScreen = true;
+    const btn = document.getElementById('shareBtn');
+    if (btn) { btn.textContent = '🛑 Stop Share'; btn.classList.add('on'); }
+    const videoTrack = screenStream.getVideoTracks()[0];
+    for (const [pid, pc] of Object.entries(peers)) {
+      pc.addTrack(videoTrack, screenStream);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      wsSend({ type: 'rtc-offer', target: pid, offer });
+    }
+    showScreenPreview('local', screenStream);
+    videoTrack.onended = () => stopScreenShare();
+  } catch(e) { console.log('Screen share cancelled:', e); }
+}
+
+function stopScreenShare() {
+  if (!isSharingScreen && !screenStream) return;
+  if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+  isSharingScreen = false;
+  const btn = document.getElementById('shareBtn');
+  if (btn) { btn.textContent = '🖥 Share Screen'; btn.classList.remove('on'); }
+  Object.values(peers).forEach(pc => {
+    const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+    if (sender) try { pc.removeTrack(sender); } catch(e) {}
+  });
+  removeScreenPreview('local');
+}
+
+function showScreenPreview(id, stream) {
+  const grid = document.getElementById('screenGrid');
+  if (!grid) return;
+  let wrap = document.getElementById('screen-' + id);
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'screen-' + id;
+    wrap.style.cssText = 'background:#000;border-radius:8px;overflow:hidden;margin-bottom:8px';
+    const lbl = document.createElement('div');
+    lbl.textContent = id === 'local' ? 'You' : (appState.users.find(u => u.id === id)?.nickname || id);
+    lbl.style.cssText = 'padding:4px 8px;font-size:12px;color:var(--text-muted)';
+    const video = document.createElement('video');
+    video.autoplay = true;
+    video.muted = (id === 'local');
+    video.style.cssText = 'width:100%;height:auto;display:block;max-height:480px;object-fit:contain';
+    wrap.appendChild(lbl);
+    wrap.appendChild(video);
+    grid.appendChild(wrap);
+  }
+  wrap.querySelector('video').srcObject = stream;
+  updateScreenGrid();
+}
+
+function removeScreenPreview(id) {
+  document.getElementById('screen-' + id)?.remove();
+  updateScreenGrid();
+}
+
+function updateScreenGrid() {
+  const grid = document.getElementById('screenGrid');
+  if (grid) grid.style.display = grid.children.length > 0 ? 'block' : 'none';
+}
+
 wsConnect();
-</script>
-</body>
-</html>
-onnect();
 </script>
 </body>
 </html>
