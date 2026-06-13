@@ -13,11 +13,9 @@ app.use(express.static('public', {
   }
 }));
 
-// Railway health check
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-// Public URL detection (Railway sets RAILWAY_PUBLIC_DOMAIN)
-function getPublicUrl(req) {
+function getPublicUrl() {
   if (process.env.RAILWAY_PUBLIC_DOMAIN) return 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN;
   if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL;
   return null;
@@ -28,19 +26,23 @@ const textChannels = new Map();
 const voiceChannels = new Map();
 let hostId = null;
 
-// Music bot state
 const musicState = {
-  playing: false,
-  videoId: null,
-  search: null,
-  startedAt: null,
-  pausedOffset: 0,
-  queue: []
+  playing: false, videoId: null, search: null,
+  startedAt: null, pausedOffset: 0, queue: [], channel: null
 };
 
 function broadcastMusicState() {
   broadcastAll({ type: 'music-state', state: Object.assign({}, musicState) });
 }
+function broadcastMusicStateToChannel(channel) {
+  const msg = JSON.stringify({ type: 'music-state', state: Object.assign({}, musicState) });
+  users.forEach((u, ws) => {
+    if (u.voiceChannel === channel && ws.readyState === WebSocket.OPEN) ws.send(msg);
+  });
+}
+
+const dmHistory = new Map();
+function dmKey(a, b) { return [a,b].sort().join(':'); }
 
 ['general', 'random', 'announcements'].forEach(name => textChannels.set(name, []));
 ['General Voice', 'Gaming', 'Music'].forEach(name => voiceChannels.set(name, new Set()));
@@ -58,26 +60,19 @@ function getLanIp() {
 function sendTo(ws, data) {
   if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data));
 }
-
 function broadcastAll(data) {
   const msg = JSON.stringify(data);
   wss.clients.forEach(c => { if (c.readyState === WebSocket.OPEN) c.send(msg); });
 }
-
 function broadcast(data, exclude) {
   const msg = JSON.stringify(data);
   wss.clients.forEach(c => { if (c !== exclude && c.readyState === WebSocket.OPEN) c.send(msg); });
 }
-
 function getState() {
   return {
     users: Array.from(users.values()).map(u => ({
-      id: u.id,
-      nickname: u.nickname,
-      avatar: u.avatar || null,
-      textChannel: u.textChannel,
-      voiceChannel: u.voiceChannel,
-      serverMuted: u.serverMuted || false
+      id: u.id, nickname: u.nickname, avatar: u.avatar || null,
+      textChannel: u.textChannel, voiceChannel: u.voiceChannel, serverMuted: u.serverMuted || false
     })),
     textChannels: Array.from(textChannels.keys()),
     voiceChannels: Array.from(voiceChannels.keys()),
@@ -88,19 +83,12 @@ function getState() {
 wss.on('connection', (ws) => {
   const id = Math.random().toString(36).substr(2, 9);
   if (!hostId) hostId = id;
-
   users.set(ws, { id, nickname: null, avatar: null, textChannel: 'general', voiceChannel: null, serverMuted: false });
 
   sendTo(ws, {
-    type: 'init',
-    id,
-    state: getState(),
-    history: Object.fromEntries(
-      Array.from(textChannels.entries()).map(([k, v]) => [k, v.slice(-100)])
-    ),
-    lanIp: getLanIp(),
-    port: process.env.PORT || 3000,
-    publicUrl: getPublicUrl()
+    type: 'init', id, state: getState(),
+    history: Object.fromEntries(Array.from(textChannels.entries()).map(([k, v]) => [k, v.slice(-100)])),
+    lanIp: getLanIp(), port: process.env.PORT || 3000, publicUrl: getPublicUrl()
   });
 
   ws.on('message', (raw) => {
@@ -122,11 +110,9 @@ wss.on('connection', (ws) => {
       if (!textChannels.has(ch)) return;
       const message = {
         id: Math.random().toString(36).substr(2, 9),
-        sender: user.nickname || 'Anonymous',
-        senderId: user.id,
+        sender: user.nickname || 'Anonymous', senderId: user.id,
         content: (msg.content || '').trim().substring(0, 2000),
-        channel: ch,
-        timestamp: Date.now()
+        channel: ch, timestamp: Date.now()
       };
       const hist = textChannels.get(ch);
       hist.push(message);
@@ -140,14 +126,11 @@ wss.on('connection', (ws) => {
       if (!msg.data || typeof msg.data !== 'string' || msg.data.length > MAX_B64) return;
       const fileMsg = {
         id: Math.random().toString(36).substr(2, 9),
-        sender: user.nickname || 'Anonymous',
-        senderId: user.id,
-        channel: ch,
-        timestamp: Date.now(),
+        sender: user.nickname || 'Anonymous', senderId: user.id,
+        channel: ch, timestamp: Date.now(),
         filename: (msg.filename || 'file').substring(0, 255),
         mimetype: (msg.mimetype || 'application/octet-stream').substring(0, 128),
-        size: msg.size || 0,
-        fileData: msg.data
+        size: msg.size || 0, fileData: msg.data
       };
       broadcastAll({ type: 'file-message', message: fileMsg });
 
@@ -157,45 +140,31 @@ wss.on('connection', (ws) => {
           if (msg.videoId) { musicState.videoId = msg.videoId; musicState.search = null; }
           else if (msg.search) { musicState.search = msg.search; musicState.videoId = null; }
           else break;
-          musicState.playing = true;
-          musicState.startedAt = Date.now();
-          musicState.pausedOffset = 0;
+          musicState.playing = true; musicState.startedAt = Date.now(); musicState.pausedOffset = 0;
           break;
         case 'pause':
           if (musicState.playing && musicState.startedAt !== null) {
             musicState.pausedOffset += (Date.now() - musicState.startedAt) / 1000;
-            musicState.playing = false;
-            musicState.startedAt = null;
+            musicState.playing = false; musicState.startedAt = null;
           }
           break;
         case 'resume':
           if (!musicState.playing && (musicState.videoId || musicState.search)) {
-            musicState.playing = true;
-            musicState.startedAt = Date.now();
+            musicState.playing = true; musicState.startedAt = Date.now();
           }
           break;
         case 'stop':
-          musicState.playing = false;
-          musicState.videoId = null;
-          musicState.search = null;
-          musicState.startedAt = null;
-          musicState.pausedOffset = 0;
-          musicState.queue = [];
+          musicState.playing = false; musicState.videoId = null; musicState.search = null;
+          musicState.startedAt = null; musicState.pausedOffset = 0; musicState.queue = [];
           break;
         case 'skip':
           if (musicState.queue.length > 0) {
             const nxt = musicState.queue.shift();
-            musicState.videoId = nxt.videoId || null;
-            musicState.search = nxt.search || null;
-            musicState.playing = true;
-            musicState.startedAt = Date.now();
-            musicState.pausedOffset = 0;
+            musicState.videoId = nxt.videoId || null; musicState.search = nxt.search || null;
+            musicState.playing = true; musicState.startedAt = Date.now(); musicState.pausedOffset = 0;
           } else {
-            musicState.playing = false;
-            musicState.videoId = null;
-            musicState.search = null;
-            musicState.startedAt = null;
-            musicState.pausedOffset = 0;
+            musicState.playing = false; musicState.videoId = null; musicState.search = null;
+            musicState.startedAt = null; musicState.pausedOffset = 0;
           }
           break;
         case 'queue':
@@ -204,7 +173,35 @@ wss.on('connection', (ws) => {
           }
           break;
       }
-      broadcastMusicState();
+      if (user.voiceChannel) {
+        musicState.channel = user.voiceChannel;
+        broadcastMusicStateToChannel(user.voiceChannel);
+      } else {
+        broadcastMusicState();
+      }
+
+    } else if (msg.type === 'direct-message') {
+      const toEntry = Array.from(users.entries()).find(([s, u]) => u.id === msg.to);
+      if (!toEntry) return;
+      const [toWs] = toEntry;
+      const dmMsg = {
+        id: Math.random().toString(36).substr(2, 9),
+        from: user.id, fromNickname: user.nickname || 'Anonymous',
+        to: msg.to, content: (msg.content || '').trim().substring(0, 2000), timestamp: Date.now()
+      };
+      if (!dmMsg.content) return;
+      const key = dmKey(user.id, msg.to);
+      if (!dmHistory.has(key)) dmHistory.set(key, []);
+      const hist = dmHistory.get(key);
+      hist.push(dmMsg);
+      if (hist.length > 200) hist.shift();
+      sendTo(ws, { type: 'direct-message', message: dmMsg });
+      sendTo(toWs, { type: 'direct-message', message: dmMsg });
+
+    } else if (msg.type === 'dm-request-history') {
+      const key = dmKey(user.id, msg.with);
+      const hist = dmHistory.get(key) || [];
+      sendTo(ws, { type: 'dm-history', with: msg.with, messages: hist });
 
     } else if (msg.type === 'create-text-channel') {
       const name = (msg.name || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').substring(0, 32);

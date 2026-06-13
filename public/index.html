@@ -242,6 +242,26 @@ html[data-theme="light"]{
 .music-btn{background:var(--bg-active);border:none;color:var(--text-primary);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px;transition:background .15s}
 .music-btn:hover{background:var(--bg-hover)}
 #ytPlayerWrap{width:160px;height:90px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#000}
+
+/* DM Panel */
+#dmPanel{position:fixed;bottom:0;right:0;width:340px;background:var(--bg-secondary);border-radius:8px 8px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.5);display:flex;flex-direction:column;z-index:150;transform:translateY(100%);transition:transform .2s}
+#dmPanel.open{transform:translateY(0)}
+.dm-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg-tertiary);border-radius:8px 8px 0 0;cursor:pointer;flex-shrink:0}
+.dm-header-name{flex:1;font-weight:600;font-size:14px}
+.dm-close-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px}
+.dm-close-btn:hover{color:var(--text-primary);background:var(--bg-hover)}
+.dm-messages{flex:1;overflow-y:auto;padding:10px 14px;max-height:260px;display:flex;flex-direction:column;gap:6px}
+.dm-msg{font-size:13px;line-height:1.4}
+.dm-msg-name{font-weight:600;font-size:11px;color:var(--accent);margin-bottom:2px}
+.dm-msg-content{background:var(--bg-tertiary);padding:6px 10px;border-radius:6px;word-break:break-word}
+.dm-msg.mine .dm-msg-name{color:var(--green)}
+.dm-msg.mine .dm-msg-content{background:var(--bg-active)}
+.dm-input-row{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--border);flex-shrink:0}
+.dm-input{flex:1;padding:7px 10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);font-size:13px}
+.dm-input:focus{outline:none;border-color:var(--accent)}
+.dm-send-btn{padding:7px 12px;background:var(--accent);border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:13px;font-weight:600}
+.dm-send-btn:hover{background:var(--accent-hover)}
+.dm-unread-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -578,6 +598,21 @@ html[data-theme="light"]{
   <div id="memberList"></div>
 </div>
 
+<!-- DM Panel -->
+<div id="dmPanel">
+  <div class="dm-header" onclick="toggleDmPanel()">
+    <span class="dm-header-name" id="dmHeaderName">Direct Message</span>
+    <span id="dmUnreadBadge" class="dm-unread-badge" style="display:none">0</span>
+    <button class="dm-close-btn" onclick="closeDmPanel(event)">&#10005;</button>
+  </div>
+  <div class="dm-messages" id="dmMessages"></div>
+  <div class="dm-input-row">
+    <input class="dm-input" id="dmInput" placeholder="Message..." maxlength="2000"
+      onkeydown="if(event.key==='Enter'&amp;&amp;!event.shiftKey){sendDm();event.preventDefault();}">
+    <button class="dm-send-btn" onclick="sendDm()">Send</button>
+  </div>
+</div>
+
 <script>
 // ---- Config ----
 const ICE_CFG = {
@@ -629,11 +664,17 @@ let currentMusicState = null;
 
 // User audio prefs
 const audioSettings = {
-  inputDeviceId: 'default', outputDeviceId: 'default',
-  noiseSuppression: true, echoCancellation: true, autoGainControl: false,
-  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true, suppressionLevel: 100,
-  sounds: (function(){ try { return localStorage.getItem('rescord_sounds') !== '0'; } catch(e){ return true; } })(),
-  theme: (function(){ try { return localStorage.getItem('rescord_theme') || 'mint'; } catch(e){ return 'mint'; } })()
+  inputDeviceId:    (function(){ try{ return localStorage.getItem('rs_inputDevice') || 'default'; }catch(e){ return 'default'; }})(),
+  outputDeviceId:   (function(){ try{ return localStorage.getItem('rs_outputDevice') || 'default'; }catch(e){ return 'default'; }})(),
+  noiseSuppression: (function(){ try{ return localStorage.getItem('rs_noiseSup') !== '0'; }catch(e){ return true; }})(),
+  echoCancellation: (function(){ try{ return localStorage.getItem('rs_echoCancel') !== '0'; }catch(e){ return true; }})(),
+  autoGainControl:  (function(){ try{ return localStorage.getItem('rs_autoGain') === '1'; }catch(e){ return false; }})(),
+  micGain:          (function(){ try{ return parseFloat(localStorage.getItem('rs_micGain') || '1'); }catch(e){ return 1.0; }})(),
+  outputVolume:     (function(){ try{ return parseFloat(localStorage.getItem('rs_outputVol') || '1'); }catch(e){ return 1.0; }})(),
+  rnnoiseEnabled:   (function(){ try{ return localStorage.getItem('rs_rnnoise') !== '0'; }catch(e){ return true; }})(),
+  suppressionLevel: (function(){ try{ return parseInt(localStorage.getItem('rs_suppression') || '100'); }catch(e){ return 100; }})(),
+  sounds:           (function(){ try{ return localStorage.getItem('rescord_sounds') !== '0'; }catch(e){ return true; }})(),
+  theme:            (function(){ try{ return localStorage.getItem('rescord_theme') || 'mint'; }catch(e){ return 'mint'; }})()
 };
 const mutedUsers = new Set(), userVolumes = {};
 
@@ -712,6 +753,8 @@ function handleMsg(msg) {
     case 'rtc-offer':  handleOffer(msg.from, msg.offer); break;
     case 'rtc-answer': handleAnswer(msg.from, msg.answer); break;
     case 'rtc-ice':    handleIce(msg.from, msg.candidate); break;
+    case 'direct-message': handleDmMessage(msg.message); break;
+    case 'dm-history':     handleDmHistory(msg); break;
   }
 }
 
@@ -1590,6 +1633,7 @@ function refreshUserVolumeList() {
 function applyInputDevice() {
   var sel = document.getElementById('inputDeviceSel');
   audioSettings.inputDeviceId = sel.value;
+  try{localStorage.setItem('rs_inputDevice', sel.value);}catch(e){}
   var label = (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].textContent) || '';
   if (/nvidia broadcast/i.test(label) && audioSettings.rnnoiseEnabled) {
     audioSettings.rnnoiseEnabled = false;
@@ -1601,6 +1645,7 @@ function applyInputDevice() {
 
 async function applyOutputDevice() {
   audioSettings.outputDeviceId = document.getElementById('outputDeviceSel').value;
+  try{localStorage.setItem('rs_outputDevice', audioSettings.outputDeviceId);}catch(e){}
   var audios = document.querySelectorAll('audio[id^="audio-"]');
   for (var i = 0; i < audios.length; i++) {
     if (audios[i].setSinkId) try { await audios[i].setSinkId(audioSettings.outputDeviceId); } catch(e) {}
@@ -1609,12 +1654,14 @@ async function applyOutputDevice() {
 
 function updateMicGain(val) {
   audioSettings.micGain = parseFloat(val);
+  try{localStorage.setItem('rs_micGain', val);}catch(e){}
   document.getElementById('micGainVal').textContent = Math.round(val * 100) + '%';
   if (gainNode) gainNode.gain.value = audioSettings.micGain;
 }
 
 function updateOutputVol(val) {
   audioSettings.outputVolume = parseFloat(val);
+  try{localStorage.setItem('rs_outputVol', val);}catch(e){}
   document.getElementById('outputVolVal').textContent = Math.round(val * 100) + '%';
   document.querySelectorAll('audio[id^="audio-"]').forEach(function(a) {
     var pid = a.id.replace('audio-', '');
@@ -1624,14 +1671,15 @@ function updateOutputVol(val) {
 
 function updateSuppression(val) {
   audioSettings.suppressionLevel = parseInt(val, 10);
+  try{localStorage.setItem('rs_suppression', val);}catch(e){}
   document.getElementById('suppressionVal').textContent = audioSettings.suppressionLevel + '%';
   if (dfnetNode) dfnetNode.port.postMessage({ type: 'SET_SUPPRESSION_LEVEL', value: audioSettings.suppressionLevel });
 }
 
-function toggleRNNoise(val)    { audioSettings.rnnoiseEnabled = val;    reacquireStream(); }
-function toggleNoiseSup(val)   { audioSettings.noiseSuppression = val;  reacquireStream(); }
-function toggleEchoCancel(val) { audioSettings.echoCancellation = val;  reacquireStream(); }
-function toggleAutoGain(val)   { audioSettings.autoGainControl = val;   reacquireStream(); }
+function toggleRNNoise(val)    { audioSettings.rnnoiseEnabled = val;   try{localStorage.setItem('rs_rnnoise', val?'1':'0');}catch(e){} reacquireStream(); }
+function toggleNoiseSup(val)   { audioSettings.noiseSuppression = val; try{localStorage.setItem('rs_noiseSup', val?'1':'0');}catch(e){} reacquireStream(); }
+function toggleEchoCancel(val) { audioSettings.echoCancellation = val; try{localStorage.setItem('rs_echoCancel', val?'1':'0');}catch(e){} reacquireStream(); }
+function toggleAutoGain(val)   { audioSettings.autoGainControl = val;  try{localStorage.setItem('rs_autoGain', val?'1':'0');}catch(e){} reacquireStream(); }
 
 function copyEl(id) {
   var el = document.getElementById(id);
@@ -1774,7 +1822,12 @@ function stopScreenShare() {
 async function toggleAudioShare() {
   if (isSharingAudio) { stopAudioShare(); return; }
   try {
-    audioShareStream = await navigator.mediaDevices.getDisplayMedia({ video: false, audio: true });
+    audioShareStream = await navigator.mediaDevices.getDisplayMedia({
+      video: { width: 1, height: 1, frameRate: 1 },
+      audio: true
+    });
+    // stop video tracks immediately - we only want audio
+    audioShareStream.getVideoTracks().forEach(function(t){ t.stop(); });
     var audioTrack = audioShareStream.getAudioTracks()[0];
     if (!audioTrack) { audioShareStream.getTracks().forEach(function(t){t.stop();}); audioShareStream = null; alert('No audio track captured.'); return; }
     isSharingAudio = true;
@@ -1819,16 +1872,51 @@ function showScreenPreview(id, stream) {
   if (!wrap) {
     wrap = document.createElement('div');
     wrap.id = 'screen-' + id;
-    wrap.style.cssText = 'background:#000;border-radius:8px;overflow:hidden;margin-bottom:8px';
+    wrap.style.cssText = 'position:relative;background:#000;border-radius:8px;overflow:hidden;margin-bottom:8px';
+
     var lbl = document.createElement('div');
     lbl.textContent = id === 'local' ? 'You' : ((appState.users.find(function(u){return u.id===id;})||{}).nickname || id);
     lbl.style.cssText = 'padding:4px 8px;font-size:12px;color:var(--text-muted)';
+
     var video = document.createElement('video');
     video.autoplay = true;
     video.muted = (id === 'local');
-    video.style.cssText = 'width:100%;height:auto;display:block;max-height:480px;object-fit:contain';
+    video.style.cssText = 'width:100%;height:auto;display:block;max-height:480px;object-fit:contain;cursor:pointer';
+    video.title = 'Double-click to fullscreen';
+    video.ondblclick = function() { video.requestFullscreen && video.requestFullscreen(); };
+
+    // Hover overlay
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:absolute;bottom:0;left:0;right:0;padding:6px 10px;display:flex;gap:6px;justify-content:flex-end;background:linear-gradient(transparent,rgba(0,0,0,.7));opacity:0;transition:opacity .2s;pointer-events:none';
+    overlay.className = 'stream-overlay';
+
+    var fsBtn = document.createElement('button');
+    fsBtn.textContent = '⛶ Fullscreen';
+    fsBtn.style.cssText = 'padding:4px 10px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:12px;cursor:pointer';
+    fsBtn.onclick = function(e) { e.stopPropagation(); video.requestFullscreen && video.requestFullscreen(); };
+
+    var popBtn = document.createElement('button');
+    popBtn.textContent = '⧉ Pop Out';
+    popBtn.style.cssText = 'padding:4px 10px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;font-size:12px;cursor:pointer';
+    popBtn.onclick = function(e) {
+      e.stopPropagation();
+      var w = window.open('', '_blank', 'width=800,height=500,toolbar=no,menubar=no');
+      if (!w) return;
+      w.document.write('<html><body style="margin:0;background:#000"><video autoplay style="width:100%;height:100vh;object-fit:contain" id="pv"></video></body></html>');
+      w.document.close();
+      w.onload = function() { try { w.document.getElementById('pv').srcObject = stream; } catch(e2) {} };
+      try { w.document.getElementById('pv').srcObject = stream; } catch(e2) {}
+    };
+
+    overlay.appendChild(fsBtn);
+    overlay.appendChild(popBtn);
     wrap.appendChild(lbl);
     wrap.appendChild(video);
+    wrap.appendChild(overlay);
+
+    wrap.addEventListener('mouseenter', function() { overlay.style.opacity = '1'; overlay.style.pointerEvents = 'auto'; });
+    wrap.addEventListener('mouseleave', function() { overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none'; });
+
     grid.appendChild(wrap);
   }
   wrap.querySelector('video').srcObject = stream;
@@ -2048,7 +2136,8 @@ function showUserCtx(ev, userId) {
     '<div class="ctx-name">' + esc(u.nickname || '?') + '</div>' +
     '<div class="ctx-row"><span>Incoming volume</span><span id="ctxVolVal">' + Math.round(vol * 100) + '%</span></div>' +
     '<input type="range" min="0" max="2" step="0.05" value="' + vol + '" oninput="ctxSetVol(\'' + userId + '\',this.value)">' +
-    '<button class="ctx-btn" onclick="ctxToggleMute(\'' + userId + '\')">' + (muted ? '🔊 Unmute user' : '🔇 Mute user') + '</button>';
+    '<button class="ctx-btn" onclick="ctxToggleMute(\'' + userId + '\')">' + (muted ? '🔊 Unmute user' : '🔇 Mute user') + '</button>' +
+    '<button class="ctx-btn" onclick="openDm(\'' + userId + '\')" style="color:var(--accent)">💬 Direct Message</button>';
   menu.style.display = 'block';
   var mw = 210, mh = menu.offsetHeight || 150;
   menu.style.left = Math.min(ev.clientX, window.innerWidth - mw - 8) + 'px';
@@ -2061,6 +2150,102 @@ document.getElementById('ctxMenu').addEventListener('click', function(e) { e.sto
 document.addEventListener('click', hideCtx);
 window.addEventListener('blur', hideCtx);
 document.addEventListener('contextmenu', function(e) { if (!e.target.closest('[data-ctx-user]')) hideCtx(); });
+
+// ===== Direct Messages =====
+var dmPeerId = null, dmOpen = false, dmUnread = 0;
+var dmLocalHistory = {}; // peerId -> array of messages (client-side cache)
+
+function openDm(userId) {
+  var u = appState.users.find(function(x){return x.id===userId;});
+  if (!u) return;
+  dmPeerId = userId;
+  dmUnread = 0;
+  document.getElementById('dmHeaderName').textContent = '💬 ' + (u.nickname || '?');
+  document.getElementById('dmUnreadBadge').style.display = 'none';
+  document.getElementById('dmMessages').innerHTML = '';
+  document.getElementById('dmPanel').classList.add('open');
+  dmOpen = true;
+  // Load cached messages
+  if (dmLocalHistory[userId]) {
+    dmLocalHistory[userId].forEach(function(m) { appendDmMessage(m); });
+  }
+  // Request server history
+  wsSend({ type: 'dm-request-history', with: userId });
+  hideCtx();
+  setTimeout(function(){ document.getElementById('dmInput').focus(); }, 100);
+}
+
+function closeDmPanel(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('dmPanel').classList.remove('open');
+  dmOpen = false;
+}
+
+function toggleDmPanel() {
+  if (dmOpen) {
+    document.getElementById('dmPanel').classList.remove('open');
+    dmOpen = false;
+  } else if (dmPeerId) {
+    document.getElementById('dmPanel').classList.add('open');
+    dmOpen = true;
+    dmUnread = 0;
+    document.getElementById('dmUnreadBadge').style.display = 'none';
+  }
+}
+
+function sendDm() {
+  var input = document.getElementById('dmInput');
+  var content = (input.value || '').trim();
+  if (!content || !dmPeerId) return;
+  wsSend({ type: 'direct-message', to: dmPeerId, content: content });
+  input.value = '';
+}
+
+function appendDmMessage(msg) {
+  var isMine = msg.from === myId;
+  var container = document.getElementById('dmMessages');
+  if (!container) return;
+  var div = document.createElement('div');
+  div.className = 'dm-msg' + (isMine ? ' mine' : '');
+  div.innerHTML = '<div class="dm-msg-name">' + esc(isMine ? 'You' : (msg.fromNickname || '?')) + '</div>' +
+    '<div class="dm-msg-content">' + esc(msg.content) + '</div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function handleDmMessage(msg) {
+  var peerId = msg.from === myId ? msg.to : msg.from;
+  if (!dmLocalHistory[peerId]) dmLocalHistory[peerId] = [];
+  dmLocalHistory[peerId].push(msg);
+  if (dmPeerId === peerId && dmOpen) {
+    appendDmMessage(msg);
+  } else if (msg.from !== myId) {
+    // Notification
+    dmUnread++;
+    var u = appState.users.find(function(x){return x.id===msg.from;});
+    if (!dmOpen || dmPeerId !== msg.from) {
+      var badge = document.getElementById('dmUnreadBadge');
+      if (badge) { badge.style.display='inline'; badge.textContent=dmUnread; }
+      // Flash the DM panel open briefly
+      if (!dmOpen) {
+        dmPeerId = msg.from;
+        if (u) document.getElementById('dmHeaderName').textContent = '💬 ' + (u.nickname || '?');
+        document.getElementById('dmPanel').classList.add('open');
+        dmOpen = true;
+        appendDmMessage(msg);
+      }
+    }
+  }
+}
+
+function handleDmHistory(data) {
+  if (data.with !== dmPeerId) return;
+  var container = document.getElementById('dmMessages');
+  if (!container) return;
+  container.innerHTML = '';
+  dmLocalHistory[data.with] = data.messages || [];
+  (data.messages || []).forEach(function(m) { appendDmMessage(m); });
+}
 
 // ===== Init =====
 applyTheme(audioSettings.theme);

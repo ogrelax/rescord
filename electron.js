@@ -19,20 +19,12 @@ ipcMain.handle('install-native-suppression', () => {
       ? path.join(process.resourcesPath, 'scripts', 'install-native-suppression.ps1')
       : path.join(__dirname, 'scripts', 'install-native-suppression.ps1');
 
-    // Launch a new elevated PowerShell that runs the installer script.
-    // Start-Process -Verb RunAs triggers the UAC prompt.
-    const psArgs = [
-      '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
-      '-Command',
-      `Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \\"${scriptPath}\\"'`
-    ];
-
-    require('child_process').spawn('powershell.exe', psArgs, {
-      detached: true,
-      stdio:    'ignore',
-      windowsHide: false,
-    }).unref();
+    // Spawn an elevated PowerShell window via Start-Process -Verb RunAs (triggers UAC).
+    const escaped = scriptPath.replace(/"/g, '""');
+    require('child_process').spawn('powershell.exe', [
+      '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+      `Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${escaped}"'`
+    ], { detached: true, stdio: 'ignore', windowsHide: false }).unref();
 
     resolve({ ok: true });
   });

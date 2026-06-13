@@ -86,7 +86,9 @@ if (html) {
     'toggleMicTest', 'stopMicTest', 'copyEl', 'onAvatarPicked',
     'removeAvatar', 'saveDisplayName', 'toggleSounds', 'applyInputDevice',
     'applyOutputDevice', 'submitNewText', 'submitNewVoice',
-    'initNativeSupTab', 'nativeSupConfirm1', 'nativeSupConfirm2', 'nativeSupCancel'
+    'initNativeSupTab', 'nativeSupConfirm1', 'nativeSupConfirm2', 'nativeSupCancel',
+    'openDm', 'closeDmPanel', 'toggleDmPanel', 'sendDm',
+    'appendDmMessage', 'handleDmMessage', 'handleDmHistory'
   ];
   const missing = requiredFns.filter(fn => !new RegExp('function\\s+' + fn + '\\s*\\(|' + fn + '\\s*=\\s*(?:async\\s*)?(?:function|\\()').test(script));
   if (missing.length) missing.forEach(fn => err('missing function: ' + fn + '()'));
@@ -110,7 +112,8 @@ if (html) {
   // WS case handlers
   const requiredCases = ['text-message', 'file-message', 'music-state', 'user-update',
     'user-joined-voice', 'user-left-voice', 'voice-peers', 'server-mute',
-    'kicked', 'rtc-offer', 'rtc-answer', 'rtc-ice', 'init'];
+    'kicked', 'rtc-offer', 'rtc-answer', 'rtc-ice', 'init',
+    'direct-message', 'dm-history'];
   requiredCases.forEach(c => {
     if (script.includes("case '" + c + "'")) ok('WS case handled: ' + c);
     else err('missing WS case: ' + c);
@@ -188,9 +191,9 @@ for (const a of [
   console.log(`\n${C.d}${'-'.repeat(56)}${C.x}`);
   console.log(`  ${C.g}${passed} passed${C.x}   ${warnings.length ? C.y : C.d}${warnings.length} warnings${C.x}   ${errors.length ? C.r : C.d}${errors.length} errors${C.x}`);
   if (errors.length) {
-    console.log(`\n${C.r}QA FAILED — build/push blocked. Fix the ✗ items above.${C.x}\n`);
+    console.log(`\n${C.r}QA FAILED -- build/push blocked. Fix the items above.${C.x}\n`);
     process.exit(1);
   }
-  console.log(`\n${C.g}QA PASSED — 0 errors.${C.x}\n`);
+  console.log(`\n${C.g}QA PASSED -- 0 errors.${C.x}\n`);
   process.exit(0);
 })();

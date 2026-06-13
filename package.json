@@ -36,9 +36,14 @@
       "preload.js",
       "server.js",
       "public/**/*",
-      "scripts/install-native-suppression.ps1",
       "node_modules/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "scripts/install-native-suppression.ps1",
+        "to": "scripts/install-native-suppression.ps1"
+      }
     ],
     "extraMetadata": {
       "main": "electron.js"
