@@ -432,10 +432,12 @@ let history = {}, lanIp = location.hostname, serverPort = 3000, publicUrl = null
 const peers = {};
 let localStream = null, rawStream = null;
 let audioCtx = null, gainNode = null, localAnalyser = null, rnnoiseNode = null, dfnetNode = null;
-let dfnetAssets = null; // cached { wasmModule, modelBytes } for DeepFilterNet3
+let dfnetAssets = null; // cached { wasmBytes, modelBytes } for DeepFilterNet3
 let activeDenoiser = 'none'; // 'dfnet' | 'rnnoise' | 'off' | 'none'
 
-// Fetch + compile DeepFilterNet3 assets once (self-hosted under /dfnet/).
+// Fetch DeepFilterNet3 assets once (self-hosted under /dfnet/). We pass the raw wasm
+// bytes (not a pre-compiled WebAssembly.Module) so the worklet compiles it itself —
+// avoids any Module structured-clone quirks crossing into the AudioWorklet.
 async function loadDFNet3Assets() {
   if (dfnetAssets) return dfnetAssets;
   const base = '/dfnet/';
@@ -443,8 +445,7 @@ async function loadDFNet3Assets() {
     fetch(base + 'df_bg.wasm').then(r => { if (!r.ok) throw new Error('df wasm ' + r.status); return r.arrayBuffer(); }),
     fetch(base + 'DeepFilterNet3_onnx.tar.gz').then(r => { if (!r.ok) throw new Error('df model ' + r.status); return r.arrayBuffer(); })
   ]);
-  const wasmModule = await WebAssembly.compile(wasmBytes); // compile off the audio thread
-  dfnetAssets = { wasmModule, modelBytes };
+  dfnetAssets = { wasmBytes, modelBytes };
   return dfnetAssets;
 }
 let screenStream = null, isSharingScreen = false;
@@ -694,13 +695,21 @@ async function buildAudioPipeline(stream) {
     let connected = false;
     // --- Primary denoiser: DeepFilterNet3 (deep filtering; ~20dB+ noise cut, speech preserved) ---
     try {
-      const { wasmModule, modelBytes } = await loadDFNet3Assets();
+      const { wasmBytes, modelBytes } = await loadDFNet3Assets();
       await audioCtx.audioWorklet.addModule('/dfnet/dfnet3-worklet.js');
       dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', {
-        processorOptions: { wasmModule, modelBytes, suppressionLevel: audioSettings.suppressionLevel }
+        processorOptions: { wasmModule: wasmBytes, modelBytes, suppressionLevel: audioSettings.suppressionLevel }
       });
       dfnetNode.port.onmessage = ({ data }) => {
-        if (data.type === 'DF_STATUS') updateDenoiseStatus(data.ok ? 'dfnet' : 'unavailable');
+        if (data.type !== 'DF_STATUS') return;
+        if (data.ok) { updateDenoiseStatus('dfnet'); }
+        else {
+          const msg = String(data.error || 'init failed');
+          console.error('[DFNet3] worklet init failed:', msg);
+          window.__dfnetError = msg;
+          const el = document.getElementById('rnnoiseStatus');
+          if (el) { el.textContent = '⚠ DFNet3: ' + msg.slice(0, 90); el.style.color = 'var(--red)'; el.title = msg; }
+        }
       };
       source.connect(dfnetNode);
       dfnetNode.connect(gainNode);
