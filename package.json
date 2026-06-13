@@ -1,0 +1,44 @@
+{
+  "name": "rescord",
+  "version": "1.0.0",
+  "description": "Rescord voice and text app",
+  "main": "electron.js",
+  "scripts": {
+    "start": "node server.js",
+    "app": "electron .",
+    "app:cloud": "cross-env RESCORD_URL=https://content-balance-production-cd65.up.railway.app electron .",
+    "build": "electron-builder --win portable",
+    "build:installer": "electron-builder --win nsis"
+  },
+  "keywords": [],
+  "author": "Marco",
+  "license": "ISC",
+  "dependencies": {
+    "@jitsi/rnnoise-wasm": "^0.2.1",
+    "express": "^5.2.1",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.rescord.app",
+    "productName": "Rescord",
+    "win": {
+      "target": ["portable", "nsis"],
+      "icon": "public/icon.ico"
+    },
+    "files": [
+      "electron.js",
+      "server.js",
+      "public/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "electron.js"
+    }
+  }
+}

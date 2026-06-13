@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rescord</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<meta name="theme-color" content="#5865f2">
+<style>
+:root {
+  --bg-primary:#313338; --bg-secondary:#2b2d31; --bg-tertiary:#1e1f22;
+  --bg-hover:#35373c; --bg-active:#404249;
+  --text-primary:#f2f3f5; --text-muted:#949ba4; --text-channel:#8e9297;
+  --accent:#5865f2; --accent-hover:#4752c4;
+  --green:#23a55a; --red:#ed4245; --yellow:#f0b232; --border:#3f4147;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-primary);color:var(--text-primary);display:flex;height:100vh;overflow:hidden}
+
+/* VAD ring */
+.vad-ring{transition:box-shadow .1s ease;border-radius:50%}
+.vad-ring.speaking{box-shadow:0 0 0 2.5px var(--green),0 0 6px rgba(35,165,90,.4)}
+
+/* Modals */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:200}
+.modal-overlay.hidden{display:none}
+.modal-box{background:var(--bg-secondary);border-radius:8px;padding:32px;width:440px}
+.modal-box h2{font-size:22px;margin-bottom:6px}
+.modal-box p{color:var(--text-muted);font-size:14px;margin-bottom:20px}
+.modal-box input{width:100%;padding:10px 14px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);font-size:15px;margin-bottom:12px}
+.modal-box input:focus{outline:none;border-color:var(--accent)}
+.btn-primary{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:15px;font-weight:600;cursor:pointer}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-secondary{width:100%;padding:11px;margin-top:8px;background:var(--bg-active);color:var(--text-primary);border:none;border-radius:4px;font-size:15px;cursor:pointer}
+.btn-secondary:hover{background:var(--bg-hover)}
+
+/* Settings */
+.settings-panel{background:var(--bg-primary);width:90vw;max-width:820px;height:82vh;border-radius:8px;display:flex;overflow:hidden;position:relative}
+.settings-nav{width:220px;background:var(--bg-secondary);padding:32px 8px;flex-shrink:0;overflow-y:auto}
+.settings-nav-cat{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:0 8px 6px}
+.settings-nav-item{padding:8px 10px;border-radius:4px;cursor:pointer;font-size:15px;color:var(--text-channel)}
+.settings-nav-item:hover{background:var(--bg-hover);color:var(--text-primary)}
+.settings-nav-item.active{background:var(--bg-active);color:var(--text-primary)}
+.settings-nav-item.danger{color:var(--red)}
+.settings-nav-item.danger:hover{background:rgba(237,66,69,.1)}
+.settings-nav-divider{height:1px;background:var(--border);margin:8px 0}
+.settings-content{flex:1;padding:32px 40px;overflow-y:auto}
+.settings-section{display:none}
+.settings-section.active{display:block}
+.settings-content h2{font-size:20px;font-weight:700;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.settings-group{margin-bottom:24px}
+.settings-group h3{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.settings-group h3 span{font-size:13px;color:var(--text-primary);text-transform:none;font-weight:600}
+.settings-select{width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);font-size:14px;cursor:pointer}
+.settings-slider{width:100%;accent-color:var(--green);cursor:pointer}
+.settings-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.toggle-label{font-size:15px;font-weight:500}
+.toggle-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.toggle-switch{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--bg-active);border-radius:22px;cursor:pointer;transition:background .2s}
+.toggle-track:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle-switch input:checked+.toggle-track{background:var(--accent)}
+.toggle-switch input:checked+.toggle-track:before{transform:translateX(18px)}
+.mic-meter-wrap{height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.mic-meter-fill{height:100%;width:0%;background:var(--green);transition:width .05s,background .1s;border-radius:4px}
+.mic-test-btn{padding:7px 16px;border:none;border-radius:4px;background:var(--bg-active);color:var(--text-primary);font-size:13px;cursor:pointer;font-weight:600}
+.mic-test-btn:hover{background:var(--bg-hover)}
+.invite-box{display:flex;gap:8px;align-items:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:10px 12px}
+.invite-url{flex:1;font-family:monospace;font-size:13px;word-break:break-all}
+.invite-copy-btn{padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;white-space:nowrap}
+.invite-copy-btn:hover{background:var(--accent-hover)}
+.settings-desc{font-size:13px;color:var(--text-muted);margin-bottom:12px}
+.code-block{font-family:monospace;background:var(--bg-tertiary);padding:10px 12px;border-radius:4px;font-size:13px;color:var(--accent);word-break:break-all;margin-bottom:8px}
+.user-vol-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.uv-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.uv-name{font-size:14px;font-weight:500;width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uv-vol{flex:1;accent-color:var(--accent);cursor:pointer}
+.uv-val{font-size:12px;color:var(--text-muted);width:35px;text-align:right;flex-shrink:0}
+.uv-btn{padding:3px 7px;border:none;border-radius:4px;background:var(--bg-active);color:var(--text-muted);cursor:pointer;font-size:12px;flex-shrink:0}
+.uv-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
+.uv-btn.on{background:var(--red);color:#fff}
+.host-badge{font-size:10px;background:var(--yellow);color:#111;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px}
+.settings-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:4px}
+.settings-close:hover{color:var(--text-primary);background:var(--bg-hover)}
+.gear-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:4px;border-radius:4px}
+.gear-btn:hover{color:var(--text-primary);background:var(--bg-hover)}
+
+/* Layout */
+#serverBar{width:72px;background:var(--bg-tertiary);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px;flex-shrink:0;overflow-y:auto}
+.server-icon{width:48px;height:48px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;cursor:pointer;transition:border-radius .15s;flex-shrink:0}
+.server-icon:hover{border-radius:16px}
+#channelSidebar{width:240px;background:var(--bg-secondary);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.server-header{padding:0 16px;height:48px;display:flex;align-items:center;font-weight:700;font-size:15px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-scroll{flex:1;overflow-y:auto}
+.channel-section{padding:16px 8px 4px}
+.section-header{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:0 8px;margin-bottom:2px;display:flex;align-items:center;justify-content:space-between}
+.section-add{cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:3px}
+.section-add:hover{color:var(--text-primary);background:var(--bg-hover)}
+.channel-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:4px;cursor:pointer;color:var(--text-channel);font-size:15px;user-select:none}
+.channel-item:hover{background:var(--bg-hover);color:var(--text-primary)}
+.channel-item.active{background:var(--bg-active);color:var(--text-primary)}
+.channel-prefix{font-size:18px;flex-shrink:0;opacity:.7}
+.voice-members-list{padding-left:28px}
+.voice-member-row{display:flex;align-items:center;gap:6px;padding:2px 8px;font-size:13px;color:var(--text-muted)}
+.vm-avatar{width:18px;height:18px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;flex-shrink:0}
+#voiceBar{background:#232428;padding:8px 10px;flex-shrink:0;display:none}
+#voiceBar.active{display:block}
+.vbar-channel{font-size:12px;color:var(--green);font-weight:600}
+.vbar-sub{font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.vbar-btns{display:flex;gap:4px}
+.vbar-btn{flex:1;padding:5px 8px;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600}
+.vbar-btn.mute-btn{background:var(--bg-active);color:var(--text-primary)}
+.vbar-btn.mute-btn.on{background:var(--red);color:#fff}
+.vbar-btn.deaf-btn{background:var(--bg-active);color:var(--text-primary)}
+.vbar-btn.deaf-btn.on{background:var(--yellow);color:#111}
+.vbar-btn.disc-btn{background:var(--red);color:#fff}
+#userBar{background:#232428;padding:8px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.my-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.my-name{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.my-tag{font-size:11px;color:var(--text-muted)}
+
+/* Main */
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#channelHeader{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:8px;font-weight:700;flex-shrink:0}
+.header-prefix{color:var(--text-muted);font-size:22px}
+#messages{flex:1;overflow-y:auto;padding:16px 16px 0;display:flex;flex-direction:column}
+.msg-group{display:flex;gap:16px;padding:4px 8px;border-radius:4px}
+.msg-group:hover{background:rgba(0,0,0,.07)}
+.msg-group+.msg-group{margin-top:16px}
+.msg-group.compact{margin-top:0!important}
+.msg-group.compact .msg-left{width:40px}
+.msg-group.compact .msg-ts{display:block;font-size:10px;color:transparent;text-align:right;line-height:22px}
+.msg-group.compact:hover .msg-ts{color:var(--text-muted)}
+.msg-left{width:40px;flex-shrink:0}
+.msg-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.msg-body{flex:1;min-width:0}
+.msg-hdr{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.msg-author{font-weight:600;font-size:15px;cursor:pointer}
+.msg-author:hover{text-decoration:underline}
+.msg-time{font-size:11px;color:var(--text-muted)}
+.msg-text{font-size:15px;line-height:1.375;word-break:break-word;color:#dcddde}
+#inputArea{padding:0 16px 24px;flex-shrink:0}
+.input-wrap{background:var(--bg-active);border-radius:8px;display:flex;align-items:center;padding:0 16px;gap:8px}
+#msgInput{flex:1;background:none;border:none;color:var(--text-primary);font-size:15px;padding:11px 0;outline:none}
+#msgInput::placeholder{color:var(--text-muted)}
+.send-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:4px;line-height:1}
+.send-btn:hover{color:var(--text-primary)}
+
+/* Member sidebar */
+#memberSidebar{width:240px;background:var(--bg-secondary);padding:16px 8px;overflow-y:auto;flex-shrink:0}
+.member-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:0 8px;margin-bottom:6px}
+.member-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;cursor:pointer}
+.member-item:hover{background:var(--bg-hover)}
+.mem-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;position:relative}
+.mem-dot{position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid var(--bg-secondary)}
+.mem-name{font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mem-actions{display:flex;gap:3px;flex-shrink:0}
+.mem-btn{padding:2px 5px;border:none;border-radius:3px;background:var(--bg-active);color:var(--text-muted);cursor:pointer;font-size:11px;display:none}
+.mem-btn.show{display:block}
+.mem-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
+.mem-btn.on{background:var(--red);color:#fff}
+
+/* Voice view */
+#voiceView{flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#voiceView.active{display:flex}
+.voice-ch-name{font-size:28px;font-weight:700}
+.voice-participants{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}
+.vp-card{width:120px;background:var(--bg-secondary);border-radius:8px;padding:20px 12px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.vp-avatar{width:60px;height:60px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+.vp-name{font-size:13px;font-weight:600;text-align:center}
+
+/* Kicked banner */
+#kickedBanner{position:fixed;top:0;left:0;right:0;z-index:300;background:var(--red);color:#fff;text-align:center;padding:12px;font-weight:700;font-size:15px;display:none}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg-tertiary);border-radius:3px}
+audio{display:none}
+</style>
+</head>
+<body>
+
+<div id="kickedBanner">You were removed by the host.</div>
+
+<!-- Nickname -->
+<div class="modal-overlay" id="nicknameModal">
+  <div class="modal-box">
+    <h2>Welcome to Rescord</h2><p>Choose a nickname to get started</p>
+    <input id="nicknameInput" type="text" placeholder="YourNickname" maxlength="32" autofocus>
+    <button class="btn-primary" onclick="submitNickname()">Enter Rescord</button>
+  </div>
+</div>
+
+<!-- Add text channel -->
+<div class="modal-overlay hidden" id="addTextModal">
+  <div class="modal-box">
+    <h2>New Text Channel</h2><p>Lowercase, dashes ok</p>
+    <input id="newTextInput" type="text" placeholder="new-channel" maxlength="32">
+    <button class="btn-primary" onclick="submitNewText()">Create</button>
+    <button class="btn-secondary" onclick="closeModal('addTextModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Add voice channel -->
+<div class="modal-overlay hidden" id="addVoiceModal">
+  <div class="modal-box">
+    <h2>New Voice Channel</h2><p>Give it a name</p>
+    <input id="newVoiceInput" type="text" placeholder="Voice Channel" maxlength="32">
+    <button class="btn-primary" onclick="submitNewVoice()">Create</button>
+    <button class="btn-secondary" onclick="closeModal('addVoiceModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="settings-panel">
+    <div class="settings-nav">
+      <div class="settings-nav-cat">Settings</div>
+      <div class="settings-nav-item active" id="nav-audio" onclick="showSection('audio')">🎙 Voice & Audio</div>
+      <div class="settings-nav-item" id="nav-invite" onclick="showSection('invite')">🔗 Invite</div>
+      <div class="settings-nav-item" id="nav-users" onclick="showSection('users')">👥 Manage Users</div>
+      <div class="settings-nav-divider"></div>
+      <div class="settings-nav-item danger" onclick="closeModal('settingsModal')">✕ Close</div>
+    </div>
+    <div class="settings-content">
+
+      <!-- Voice & Audio -->
+      <div class="settings-section active" id="section-audio">
+        <h2>Voice & Audio</h2>
+
+        <div class="settings-group">
+          <h3>Mic Level</h3>
+          <div class="mic-meter-wrap"><div id="micMeterFill" class="mic-meter-fill"></div></div>
+          <button id="micTestBtn" class="mic-test-btn" onclick="toggleMicTest()">🎤 Test Mic (hear yourself)</button>
+          <p id="micTestStatus" class="settings-desc" style="margin-top:6px;color:var(--yellow)"></p>
+        </div>
+
+        <div class="settings-group">
+          <h3>Input Device</h3>
+          <select id="inputDeviceSel" class="settings-select" onchange="applyInputDevice()">
+            <option value="default">Default Microphone</option>
+          </select>
+        </div>
+        <div class="settings-group">
+          <h3>Output Device</h3>
+          <select id="outputDeviceSel" class="settings-select" onchange="applyOutputDevice()">
+            <option value="default">Default Speaker</option>
+          </select>
+        </div>
+        <div class="settings-group">
+          <h3>Mic Sensitivity <span id="micGainVal">100%</span></h3>
+          <input type="range" id="micGainSlider" class="settings-slider" min="0" max="3" step="0.05" value="1" oninput="updateMicGain(this.value)">
+        </div>
+        <div class="settings-group">
+          <h3>Output Volume <span id="outputVolVal">100%</span></h3>
+          <input type="range" id="outputVolSlider" class="settings-slider" min="0" max="1" step="0.05" value="1" oninput="updateOutputVol(this.value)">
+        </div>
+
+        <div class="settings-toggle-row">
+          <div>
+            <div class="toggle-label">AI Noise Suppression</div>
+            <div class="toggle-sub">RNNoise (werman) — deep-learning denoiser · <span id="rnnoiseStatus" style="color:var(--yellow)">loading…</span></div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="rnnoiseToggle" checked onchange="toggleRNNoise(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-toggle-row">
+          <div>
+            <div class="toggle-label">Browser Noise Suppression</div>
+            <div class="toggle-sub">Browser built-in (used when AI is off)</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="noiseSupToggle" checked onchange="toggleNoiseSup(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-toggle-row">
+          <div>
+            <div class="toggle-label">Echo Cancellation</div>
+            <div class="toggle-sub">Reduce speaker bleed into mic</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="echoCancelToggle" checked onchange="toggleEchoCancel(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-toggle-row">
+          <div>
+            <div class="toggle-label">Auto Gain Control</div>
+            <div class="toggle-sub">Browser auto-adjusts mic level</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="autoGainToggle" onchange="toggleAutoGain(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+      </div>
+
+      <!-- Invite -->
+      <div class="settings-section" id="section-invite">
+        <h2>Invite People</h2>
+        <div class="settings-group" id="inviteCloudGroup" style="display:none">
+          <h3>🌐 Cloud Link <span style="background:var(--green);color:#111;font-size:11px;padding:2px 6px;border-radius:3px;font-weight:700">LIVE</span></h3>
+          <p class="settings-desc">Share this — works from anywhere, no setup needed.</p>
+          <div class="invite-box">
+            <span class="invite-url" id="inviteCloud"></span>
+            <button class="invite-copy-btn" onclick="copyEl('inviteCloud')">📋 Copy</button>
+          </div>
+        </div>
+        <div class="settings-group">
+          <h3>Local Network</h3>
+          <p class="settings-desc">Anyone on your WiFi.</p>
+          <div class="invite-box">
+            <span class="invite-url" id="inviteLan"></span>
+            <button class="invite-copy-btn" onclick="copyEl('inviteLan')">📋 Copy</button>
+          </div>
+        </div>
+        <div class="settings-group" id="inviteTunnelGroup">
+          <h3>Internet (self-hosted)</h3>
+          <p class="settings-desc">Run in a terminal to expose this PC to the internet:</p>
+          <div class="code-block" id="ngrokCmd"></div>
+          <p class="settings-desc">Share the <strong>https://</strong> URL it gives you.</p>
+        </div>
+        <div class="settings-group">
+          <h3>Skip Nickname Screen</h3>
+          <p class="settings-desc">Append <code style="background:var(--bg-tertiary);padding:2px 5px;border-radius:3px">?name=YourName</code> to any link.</p>
+        </div>
+      </div>
+
+      <!-- Manage Users -->
+      <div class="settings-section" id="section-users">
+        <h2>Manage Users</h2>
+        <p class="settings-desc" style="margin-bottom:16px">Per-user volume and mute (local). Host can server-mute or kick.</p>
+        <div id="userVolumeList"></div>
+      </div>
+
+    </div>
+    <button class="settings-close" onclick="closeModal('settingsModal')">✕</button>
+  </div>
+</div>
+
+<!-- Server bar -->
+<div id="serverBar"><div class="server-icon" title="Rescord">R</div></div>
+
+<!-- Channel sidebar -->
+<div id="channelSidebar">
+  <div class="server-header">⚡ Rescord</div>
+  <div class="sidebar-scroll">
+    <div class="channel-section">
+      <div class="section-header">Text Channels <span class="section-add" onclick="openModal('addTextModal')">+</span></div>
+      <div id="textChannelList"></div>
+    </div>
+    <div class="channel-section">
+      <div class="section-header">Voice Channels <span class="section-add" onclick="openModal('addVoiceModal')">+</span></div>
+      <div id="voiceChannelList"></div>
+    </div>
+  </div>
+  <div id="voiceBar">
+    <div class="vbar-channel" id="vbarChannel">🔊 General Voice</div>
+    <div class="vbar-sub">Voice Connected</div>
+    <div class="vbar-btns">
+      <button class="vbar-btn mute-btn" id="muteBtn" onclick="toggleMute()">🎤 Mute</button>
+      <button class="vbar-btn deaf-btn"  id="deafBtn"  onclick="toggleDeafen()">🔊 Deaf</button>
+      <button class="vbar-btn disc-btn"               onclick="leaveVoice()">✕</button>
+    </div>
+  </div>
+  <div id="userBar">
+    <div class="my-avatar vad-ring" id="myAvatar" data-my-vad="1">?</div>
+    <div style="flex:1;min-width:0">
+      <div class="my-name" id="myName">—</div>
+      <div class="my-tag"  id="myTag">Online</div>
+    </div>
+    <button class="gear-btn" onclick="openSettings()" title="Settings">⚙</button>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div id="channelHeader">
+    <span class="header-prefix" id="headerPrefix">#</span>
+    <span id="headerName">general</span>
+  </div>
+  <div id="chatView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div id="messages"></div>
+    <div id="inputArea">
+      <div class="input-wrap">
+        <input id="msgInput" type="text" placeholder="Message #general" onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+  <div id="voiceView">
+    <div class="voice-ch-name" id="voiceChannelTitle">🔊 General Voice</div>
+    <div class="voice-participants" id="voiceParticipants"></div>
+    <button class="vbar-btn disc-btn" style="padding:10px 24px;font-size:14px;flex:none" onclick="leaveVoice()">Disconnect</button>
+  </div>
+</div>
+
+<!-- Member sidebar -->
+<div id="memberSidebar">
+  <div class="member-section-hdr">Online — <span id="onlineCount">0</span></div>
+  <div id="memberList"></div>
+</div>
+
+<script>
+// ---- Config ----
+const ICE_CFG = { iceServers: [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun.relay.metered.ca:80' },
+  { urls: 'turn:openrelay.metered.ca:80',              username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443',             username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+]};
+
+// ---- State ----
+let ws, myId, myNickname = '';
+let currentText = 'general', currentVoice = null;
+let isMuted = false, isDeafened = false, isServerMuted = false, isHost = false;
+let appState = { users: [], textChannels: [], voiceChannels: [], hostId: null };
+let history = {}, lanIp = location.hostname, serverPort = 3000, publicUrl = null;
+
+// WebRTC / audio
+const peers = {};
+let localStream = null, rawStream = null;
+let audioCtx = null, gainNode = null, localAnalyser = null, rnnoiseNode = null;
+let localVADLoop = null;
+const remoteVAD = {}; // peerId -> { ctx, frame }
+
+// User audio prefs
+const audioSettings = {
+  inputDeviceId: 'default', outputDeviceId: 'default',
+  noiseSuppression: true, echoCancellation: true, autoGainControl: false,
+  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true
+};
+const mutedUsers = new Set(), userVolumes = {};
+
+// Mic test
+let testStream = null, testCtx = null, testMeterFrame = null;
+
+// ---- WebSocket ----
+function wsConnect() {
+  const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+  ws = new WebSocket(proto + location.host);
+  ws.onmessage = e => handleMsg(JSON.parse(e.data));
+  ws.onclose   = () => setTimeout(wsConnect, 2000);
+}
+
+function wsSend(data) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(data)); }
+
+function handleMsg(msg) {
+  switch (msg.type) {
+    case 'init':
+      myId = msg.id; appState = msg.state; history = msg.history || {};
+      lanIp = msg.lanIp || location.hostname; serverPort = msg.port || 3000; publicUrl = msg.publicUrl || null;
+      isHost = appState.hostId === myId;
+      if (myNickname) {
+        wsSend({ type: 'set-nickname', nickname: myNickname });
+        renderChannels(); renderMessages(); renderMembers();
+      }
+      break;
+    case 'user-update':
+      appState = msg.state;
+      isHost = appState.hostId === myId;
+      document.getElementById('myTag').textContent = isHost ? '👑 Host' : 'Online';
+      renderChannels(); renderMembers(); updateVoiceView();
+      break;
+    case 'text-message':
+      if (!history[msg.message.channel]) history[msg.message.channel] = [];
+      history[msg.message.channel].push(msg.message);
+      if (msg.message.channel === currentText) appendMessage(msg.message);
+      break;
+    case 'user-joined-voice':
+      if (currentVoice && msg.channel === currentVoice) initiateCall(msg.userId);
+      break;
+    case 'user-left-voice':
+      closePeer(msg.userId); updateVoiceView(); break;
+    case 'voice-peers':
+      msg.peers.forEach(pid => initiateCall(pid)); break;
+    case 'server-mute':
+      isServerMuted = msg.muted;
+      if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = !isMuted && !isServerMuted);
+      document.getElementById('myTag').textContent = isServerMuted ? '🔇 Server Muted' : (isHost ? '👑 Host' : 'Online');
+      break;
+    case 'kicked':
+      document.getElementById('kickedBanner').style.display = 'block';
+      leaveVoice(); if (ws) ws.close(); break;
+    case 'rtc-offer':  handleOffer(msg.from, msg.offer); break;
+    case 'rtc-answer': handleAnswer(msg.from, msg.answer); break;
+    case 'rtc-ice':    handleIce(msg.from, msg.candidate); break;
+  }
+}
+
+// ---- Nickname ----
+function submitNickname() {
+  const name = document.getElementById('nicknameInput').value.trim();
+  if (!name) return;
+  myNickname = name;
+  document.getElementById('nicknameModal').classList.add('hidden');
+  document.getElementById('myName').textContent = name;
+  document.getElementById('myAvatar').textContent = name[0].toUpperCase();
+  wsSend({ type: 'set-nickname', nickname: name });
+  renderChannels(); renderMessages(); renderMembers();
+}
+document.getElementById('nicknameInput').onkeydown = e => { if (e.key === 'Enter') submitNickname(); };
+
+// URL param bypass: ?name=Marco
+(function() {
+  const n = new URLSearchParams(location.search).get('name');
+  if (n && n.trim()) {
+    myNickname = n.trim().slice(0, 32);
+    document.getElementById('nicknameModal').classList.add('hidden');
+    document.getElementById('myName').textContent = myNickname;
+    document.getElementById('myAvatar').textContent = myNickname[0].toUpperCase();
+  }
+})();
+
+// ---- Modals ----
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+  const inp = document.getElementById(id).querySelector('input');
+  if (inp) { inp.value = ''; inp.focus(); }
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  if (id === 'settingsModal') stopMicTest();
+}
+
+// ---- Channels ----
+function renderChannels() {
+  const tl = document.getElementById('textChannelList');
+  tl.innerHTML = '';
+  appState.textChannels.forEach(ch => {
+    const el = document.createElement('div');
+    el.className = 'channel-item' + (ch === currentText && !currentVoice ? ' active' : '');
+    el.innerHTML = '<span class="channel-prefix">#</span>' + esc(ch);
+    el.onclick = () => switchText(ch);
+    tl.appendChild(el);
+  });
+  const vl = document.getElementById('voiceChannelList');
+  vl.innerHTML = '';
+  appState.voiceChannels.forEach(ch => {
+    const el = document.createElement('div');
+    el.className = 'channel-item' + (ch === currentVoice ? ' active' : '');
+    el.innerHTML = '<span class="channel-prefix">🔊</span>' + esc(ch);
+    el.onclick = () => joinVoice(ch);
+    vl.appendChild(el);
+    const members = appState.users.filter(u => u.voiceChannel === ch);
+    if (members.length) {
+      const sub = document.createElement('div');
+      sub.className = 'voice-members-list';
+      members.forEach(u => {
+        const r = document.createElement('div');
+        r.className = 'voice-member-row';
+        r.innerHTML = `<div class="vm-avatar vad-ring" data-vad="${u.id}">${(u.nickname||'?')[0].toUpperCase()}</div>${esc(u.nickname||'?')}`;
+        sub.appendChild(r);
+      });
+      vl.appendChild(sub);
+    }
+  });
+}
+
+function switchText(ch) {
+  currentText = ch;
+  document.getElementById('headerPrefix').textContent = '#';
+  document.getElementById('headerName').textContent = ch;
+  document.getElementById('msgInput').placeholder = 'Message #' + ch;
+  document.getElementById('chatView').style.display = 'flex';
+  document.getElementById('voiceView').classList.remove('active');
+  renderChannels(); renderMessages();
+}
+
+// ---- Messages ----
+let lastSenderId = null, lastSenderTime = 0;
+
+function renderMessages() {
+  const c = document.getElementById('messages');
+  c.innerHTML = '';
+  lastSenderId = null; lastSenderTime = 0;
+  (history[currentText] || []).forEach(m => appendMessage(m, false));
+  c.scrollTop = c.scrollHeight;
+}
+
+function appendMessage(msg, scroll = true) {
+  if (msg.channel !== currentText) return;
+  const c = document.getElementById('messages');
+  const t = new Date(msg.timestamp);
+  const ts = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const compact = msg.senderId === lastSenderId && (msg.timestamp - lastSenderTime) < 300000;
+  lastSenderId = msg.senderId; lastSenderTime = msg.timestamp;
+  const el = document.createElement('div');
+  el.className = 'msg-group' + (compact ? ' compact' : '');
+  el.innerHTML = compact
+    ? `<div class="msg-left"><span class="msg-ts">${ts}</span></div><div class="msg-body"><div class="msg-text">${esc(msg.content)}</div></div>`
+    : `<div class="msg-left"><div class="msg-avatar">${(msg.sender||'?')[0].toUpperCase()}</div></div><div class="msg-body"><div class="msg-hdr"><span class="msg-author">${esc(msg.sender)}</span><span class="msg-time">${ts}</span></div><div class="msg-text">${esc(msg.content)}</div></div>`;
+  c.appendChild(el);
+  if (scroll) c.scrollTop = c.scrollHeight;
+}
+
+function sendMessage() {
+  const inp = document.getElementById('msgInput');
+  const content = inp.value.trim();
+  if (!content || !myNickname) return;
+  wsSend({ type: 'text-message', channel: currentText, content });
+  inp.value = '';
+}
+
+// ---- Members ----
+function renderMembers() {
+  const list = document.getElementById('memberList');
+  list.innerHTML = '';
+  document.getElementById('onlineCount').textContent = appState.users.length;
+  appState.users.forEach(u => {
+    const el = document.createElement('div');
+    el.className = 'member-item';
+    const isSelf = u.id === myId;
+    const inVoice = !!u.voiceChannel;
+    const muted = mutedUsers.has(u.id);
+    const sm = u.serverMuted;
+    const vadAttr = isSelf ? 'data-my-vad="1"' : (inVoice ? `data-vad="${u.id}"` : '');
+
+    let nameHtml = esc(u.nickname || 'Anonymous');
+    if (u.id === appState.hostId) nameHtml += '<span class="host-badge">HOST</span>';
+    if (sm) nameHtml += ' 🔇';
+
+    let btns = '';
+    if (inVoice && !isSelf) {
+      btns += `<button class="mem-btn show${muted?' on':''}" onclick="toggleUserMute('${u.id}')">${muted?'🔇':'🔊'}</button>`;
+    }
+    if (isHost && !isSelf && inVoice) {
+      btns += `<button class="mem-btn show${sm?' on':''}" onclick="hostMute('${u.id}')" title="Server Mute">${sm?'🚫':'🔈'}</button>`;
+      btns += `<button class="mem-btn show" onclick="hostKick('${u.id}')" style="color:var(--red)">✕</button>`;
+    }
+
+    el.innerHTML = `<div class="mem-avatar vad-ring" ${vadAttr}>${(u.nickname||'?')[0].toUpperCase()}<div class="mem-dot"></div></div><div class="mem-name">${nameHtml}</div><div class="mem-actions">${btns}</div>`;
+    list.appendChild(el);
+  });
+}
+
+// ---- Channel creation ----
+function submitNewText() {
+  const n = document.getElementById('newTextInput').value.trim();
+  if (n) wsSend({ type: 'create-text-channel', name: n });
+  closeModal('addTextModal');
+}
+function submitNewVoice() {
+  const n = document.getElementById('newVoiceInput').value.trim();
+  if (n) wsSend({ type: 'create-voice-channel', name: n });
+  closeModal('addVoiceModal');
+}
+document.getElementById('newTextInput').onkeydown  = e => { if (e.key==='Enter') submitNewText();  if (e.key==='Escape') closeModal('addTextModal'); };
+document.getElementById('newVoiceInput').onkeydown = e => { if (e.key==='Enter') submitNewVoice(); if (e.key==='Escape') closeModal('addVoiceModal'); };
+
+// ---- Audio pipeline ----
+async function buildAudioPipeline(stream) {
+  // Close previous context
+  if (audioCtx) { try { audioCtx.close(); } catch(e) {} }
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  gainNode      = audioCtx.createGain();
+  gainNode.gain.value = audioSettings.micGain;
+  localAnalyser = audioCtx.createAnalyser();
+  localAnalyser.fftSize = 256;
+  const dest    = audioCtx.createMediaStreamDestination();
+  const source  = audioCtx.createMediaStreamSource(stream);
+
+  source.connect(localAnalyser); // VAD tap (raw signal)
+
+  if (audioSettings.rnnoiseEnabled) {
+    try {
+      await audioCtx.audioWorklet.addModule('/rnnoise-worklet.js');
+      rnnoiseNode = new AudioWorkletNode(audioCtx, 'rnnoise-processor');
+      // Wire up persistent message handler for status updates
+      rnnoiseNode.port.onmessage = ({ data }) => {
+        if (data.type === 'ready') updateRNNoiseStatus(data.ok ? 'active' : 'unavailable');
+      };
+      // Poll for readiness — retry every second until confirmed
+      let rnnoiseRetries = 0;
+      const pollReady = () => {
+        if (!rnnoiseNode) return;
+        rnnoiseNode.port.postMessage({ type: 'ready?' });
+        if (++rnnoiseRetries < 10) setTimeout(pollReady, 1000);
+      };
+      setTimeout(pollReady, 800);
+      source.connect(rnnoiseNode);
+      rnnoiseNode.connect(gainNode);
+    } catch(e) {
+      console.warn('[RNNoise] worklet load failed, bypassing:', e);
+      source.connect(gainNode);
+      updateRNNoiseStatus('error');
+    }
+  } else {
+    rnnoiseNode = null;
+    source.connect(gainNode);
+    updateRNNoiseStatus('off');
+  }
+
+  gainNode.connect(dest);
+  startLocalVAD();
+  return dest.stream;
+}
+
+async function getProcessedStream() {
+  const constraints = { audio: {
+    noiseSuppression: audioSettings.noiseSuppression,
+    echoCancellation: audioSettings.echoCancellation,
+    autoGainControl:  audioSettings.autoGainControl
+  }};
+  if (audioSettings.inputDeviceId && audioSettings.inputDeviceId !== 'default') {
+    constraints.audio.deviceId = { exact: audioSettings.inputDeviceId };
+  }
+  rawStream = await navigator.mediaDevices.getUserMedia(constraints);
+  return buildAudioPipeline(rawStream);
+}
+
+async function reacquireStream() {
+  if (!currentVoice) return;
+  try {
+    const oldRaw = rawStream; // save before getProcessedStream overwrites rawStream
+    const newStream = await getProcessedStream();
+    if (oldRaw) oldRaw.getTracks().forEach(t => t.stop()); // FIX: stop old mic track
+    const newTrack = newStream.getAudioTracks()[0];
+    newTrack.enabled = !isMuted && !isServerMuted;
+    Object.values(peers).forEach(pc => {
+      const sender = pc.getSenders().find(s => s.track?.kind === 'audio');
+      if (sender) sender.replaceTrack(newTrack);
+    });
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    localStream = newStream;
+  } catch(e) { console.error('reacquire failed:', e); }
+}
+
+// ---- Local VAD + Meter ----
+function startLocalVAD() {
+  if (localVADLoop) cancelAnimationFrame(localVADLoop);
+  if (!localAnalyser) return;
+  const data = new Uint8Array(localAnalyser.frequencyBinCount);
+  let speaking = false, speakTimeout = null;
+
+  const poll = () => {
+    localAnalyser.getByteFrequencyData(data);
+    let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i];
+    const level = Math.min(sum / data.length / 60, 1);
+
+    const fill = document.getElementById('micMeterFill');
+    if (fill) {
+      fill.style.width = (level * 100) + '%';
+      fill.style.background = level > 0.8 ? 'var(--red)' : level > 0.5 ? 'var(--yellow)' : 'var(--green)';
+    }
+    if (level > 0.06 && !speaking) {
+      speaking = true; setMyVAD(true);
+    } else if (level <= 0.04 && speaking) {
+      clearTimeout(speakTimeout);
+      speakTimeout = setTimeout(() => { speaking = false; setMyVAD(false); }, 350);
+    }
+    localVADLoop = requestAnimationFrame(poll);
+  };
+  poll();
+}
+
+function stopLocalVAD() {
+  if (localVADLoop) { cancelAnimationFrame(localVADLoop); localVADLoop = null; }
+  localAnalyser = null;
+  setMyVAD(false);
+  const fill = document.getElementById('micMeterFill');
+  if (fill) fill.style.width = '0%';
+}
+
+function setMyVAD(speaking) {
+  document.querySelectorAll('[data-my-vad]').forEach(el => el.classList.toggle('speaking', speaking));
+}
+
+// ---- Remote VAD ----
+function startRemoteVAD(peerId, stream) {
+  cleanupRemoteVAD(peerId);
+  try {
+    const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+    const source   = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let speaking = false, timeout = null;
+    let frameId;
+    const poll = () => {
+      analyser.getByteFrequencyData(data);
+      let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i];
+      const avg = sum / data.length;
+      if (avg > 14 && !speaking) { speaking = true; setRemoteVAD(peerId, true); }
+      else if (avg <= 10 && speaking) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => { speaking = false; setRemoteVAD(peerId, false); }, 350);
+      }
+      frameId = requestAnimationFrame(poll);
+      remoteVAD[peerId].frame = frameId;
+    };
+    remoteVAD[peerId] = { ctx, frame: null };
+    poll();
+  } catch(e) { console.warn('Remote VAD failed:', e); }
+}
+
+function cleanupRemoteVAD(peerId) {
+  if (remoteVAD[peerId]) {
+    cancelAnimationFrame(remoteVAD[peerId].frame);
+    remoteVAD[peerId].ctx.close().catch(() => {});
+    delete remoteVAD[peerId];
+  }
+  setRemoteVAD(peerId, false);
+}
+
+function setRemoteVAD(peerId, speaking) {
+  document.querySelectorAll(`[data-vad="${peerId}"]`).forEach(el => el.classList.toggle('speaking', speaking));
+}
+
+// ---- RNNoise status ----
+function updateRNNoiseStatus(state) {
+  const el = document.getElementById('rnnoiseStatus');
+  if (!el) return;
+  const map = {
+    active:      ['✓ active',      'var(--green)'],
+    unavailable: ['⚠ unavailable', 'var(--yellow)'],
+    error:       ['✗ failed',      'var(--red)'],
+    off:         ['off',           'var(--text-muted)'],
+    loading:     ['loading…',      'var(--yellow)'],
+  };
+  const [text, color] = map[state] || map.loading;
+  el.textContent = text;
+  el.style.color = color;
+}
+
+// ---- Mic test ----
+async function toggleMicTest() {
+  if (testStream) { stopMicTest(); return; }
+  const btn = document.getElementById('micTestBtn');
+  const status = document.getElementById('micTestStatus');
+  try {
+    const constraints = { audio: {
+      deviceId: audioSettings.inputDeviceId !== 'default' ? { exact: audioSettings.inputDeviceId } : undefined,
+      noiseSuppression: audioSettings.noiseSuppression,
+      echoCancellation: audioSettings.echoCancellation
+    }};
+    testStream = await navigator.mediaDevices.getUserMedia(constraints);
+    testCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source   = testCtx.createMediaStreamSource(testStream);
+    const gain     = testCtx.createGain(); gain.gain.value = 0.7;
+    const analyser = testCtx.createAnalyser(); analyser.fftSize = 256;
+    source.connect(analyser);
+    source.connect(gain);
+    gain.connect(testCtx.destination);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const meter = () => {
+      analyser.getByteFrequencyData(data);
+      let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i];
+      const level = Math.min(sum / data.length / 60, 1);
+      const fill = document.getElementById('micMeterFill');
+      if (fill) {
+        fill.style.width = (level * 100) + '%';
+        fill.style.background = level > 0.8 ? 'var(--red)' : level > 0.5 ? 'var(--yellow)' : 'var(--green)';
+      }
+      testMeterFrame = requestAnimationFrame(meter);
+    };
+    meter();
+    btn.textContent = '⏹ Stop Test'; btn.style.background = 'var(--red)'; btn.style.color = '#fff';
+    status.textContent = 'Speak — you should hear yourself back.';
+  } catch(e) {
+    status.textContent = 'Mic error: ' + e.message;
+  }
+}
+
+function stopMicTest() {
+  if (testMeterFrame) { cancelAnimationFrame(testMeterFrame); testMeterFrame = null; }
+  if (testStream) { testStream.getTracks().forEach(t => t.stop()); testStream = null; }
+  if (testCtx)   { testCtx.close(); testCtx = null; }
+  const btn = document.getElementById('micTestBtn');
+  if (btn) { btn.textContent = '🎤 Test Mic (hear yourself)'; btn.style.background = ''; btn.style.color = ''; }
+  const status = document.getElementById('micTestStatus');
+  if (status) status.textContent = '';
+  const fill = document.getElementById('micMeterFill');
+  if (fill) fill.style.width = '0%';
+}
+
+// ---- Voice controls ----
+async function joinVoice(ch) {
+  if (currentVoice === ch) { leaveVoice(); return; }
+  try { localStream = await getProcessedStream(); }
+  catch(e) { alert('Mic access denied — cannot join voice.'); return; }
+  if (currentVoice) { Object.keys(peers).forEach(closePeer); wsSend({ type: 'leave-voice' }); }
+  currentVoice = ch;
+  wsSend({ type: 'join-voice', channel: ch });
+  document.getElementById('chatView').style.display = 'none';
+  document.getElementById('voiceView').classList.add('active');
+  document.getElementById('voiceChannelTitle').textContent = '🔊 ' + ch;
+  document.getElementById('headerPrefix').textContent = '🔊';
+  document.getElementById('headerName').textContent = ch;
+  document.getElementById('voiceBar').classList.add('active');
+  document.getElementById('vbarChannel').textContent = '🔊 ' + ch;
+  updateVoiceView(); renderChannels();
+}
+
+function leaveVoice() {
+  if (!currentVoice) return;
+  wsSend({ type: 'leave-voice' });
+  currentVoice = null;
+  Object.keys(peers).forEach(closePeer);
+  stopLocalVAD();
+  if (rawStream)   { rawStream.getTracks().forEach(t => t.stop());   rawStream = null; }
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  if (audioCtx)    { try { audioCtx.close(); } catch(e) {} audioCtx = null; gainNode = null; rnnoiseNode = null; }
+  document.getElementById('voiceBar').classList.remove('active');
+  document.getElementById('voiceView').classList.remove('active');
+  document.getElementById('chatView').style.display = 'flex';
+  document.getElementById('headerPrefix').textContent = '#';
+  document.getElementById('headerName').textContent = currentText;
+  updateVoiceView(); renderChannels();
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = !isMuted && !isServerMuted);
+  const btn = document.getElementById('muteBtn');
+  btn.textContent = isMuted ? '🔇 Unmute' : '🎤 Mute';
+  btn.classList.toggle('on', isMuted);
+}
+
+function toggleDeafen() {
+  isDeafened = !isDeafened;
+  document.querySelectorAll('audio[id^="audio-"]').forEach(a => a.muted = isDeafened);
+  const btn = document.getElementById('deafBtn');
+  btn.textContent = isDeafened ? '🔇 Undeaf' : '🔊 Deaf';
+  btn.classList.toggle('on', isDeafened);
+}
+
+function updateVoiceView() {
+  if (!currentVoice) return;
+  const ps = appState.users.filter(u => u.voiceChannel === currentVoice);
+  const container = document.getElementById('voiceParticipants');
+  container.innerHTML = '';
+  ps.forEach(u => {
+    const card = document.createElement('div');
+    card.className = 'vp-card';
+    const vadAttr = u.id === myId ? 'data-my-vad="1"' : `data-vad="${u.id}"`;
+    card.innerHTML = `<div class="vp-avatar vad-ring" ${vadAttr}>${(u.nickname||'?')[0].toUpperCase()}</div><div class="vp-name">${esc(u.nickname||'?')}${u.id===appState.hostId?' 👑':''}</div>`;
+    container.appendChild(card);
+  });
+}
+
+// ---- Host ----
+function hostMute(userId) { wsSend({ type: 'host-mute', target: userId }); }
+function hostKick(userId) { if (confirm('Kick this user?')) wsSend({ type: 'host-kick', target: userId }); }
+
+// ---- Per-user local volume/mute ----
+function toggleUserMute(userId) {
+  if (mutedUsers.has(userId)) {
+    mutedUsers.delete(userId);
+    const a = document.getElementById('audio-' + userId);
+    if (a) a.muted = false;
+  } else {
+    mutedUsers.add(userId);
+    const a = document.getElementById('audio-' + userId);
+    if (a) a.muted = true;
+  }
+  renderMembers(); refreshUserVolumeList();
+}
+
+function setUserVolume(userId, vol) {
+  userVolumes[userId] = parseFloat(vol);
+  const a = document.getElementById('audio-' + userId);
+  if (a) a.volume = userVolumes[userId];
+  const v = document.getElementById('uvval-' + userId);
+  if (v) v.textContent = Math.round(vol * 100) + '%';
+}
+
+// ---- Settings ----
+async function openSettings() {
+  document.getElementById('settingsModal').classList.remove('hidden');
+  showSection('audio');
+
+  // Refresh RNNoise status each time settings opens
+  if (rnnoiseNode && audioSettings.rnnoiseEnabled) {
+    updateRNNoiseStatus('loading');
+    rnnoiseNode.port.postMessage({ type: 'ready?' });
+  } else if (!audioSettings.rnnoiseEnabled) {
+    updateRNNoiseStatus('off');
+  } else {
+    updateRNNoiseStatus('loading');
+  }
+
+  // Invite links
+  const base = `http://${lanIp}:${serverPort}`;
+  const lanEl = document.getElementById('inviteLan');
+  if (lanEl) lanEl.textContent = base;
+  const ngEl = document.getElementById('ngrokCmd');
+  if (ngEl) ngEl.textContent = `npx localtunnel --port ${serverPort}`;
+  // Cloud URL (Railway deployment)
+  const cloudGroup = document.getElementById('inviteCloudGroup');
+  const cloudEl    = document.getElementById('inviteCloud');
+  const tunnelGroup = document.getElementById('inviteTunnelGroup');
+  if (publicUrl) {
+    if (cloudGroup) cloudGroup.style.display = '';
+    if (cloudEl)   cloudEl.textContent = publicUrl;
+    if (tunnelGroup) tunnelGroup.style.display = 'none'; // not needed when deployed
+  } else {
+    if (cloudGroup) cloudGroup.style.display = 'none';
+    if (tunnelGroup) tunnelGroup.style.display = '';
+  }
+
+  // Restore slider/toggle state
+  document.getElementById('micGainSlider').value   = audioSettings.micGain;
+  document.getElementById('micGainVal').textContent = Math.round(audioSettings.micGain * 100) + '%';
+  document.getElementById('outputVolSlider').value  = audioSettings.outputVolume;
+  document.getElementById('outputVolVal').textContent = Math.round(audioSettings.outputVolume * 100) + '%';
+  document.getElementById('noiseSupToggle').checked  = audioSettings.noiseSuppression;
+  document.getElementById('echoCancelToggle').checked = audioSettings.echoCancellation;
+  document.getElementById('autoGainToggle').checked   = audioSettings.autoGainControl;
+  document.getElementById('rnnoiseToggle').checked    = audioSettings.rnnoiseEnabled;
+
+  // Device enumeration — request mic permission first so we get real labels
+  try {
+    let perm = null;
+    if (!localStream) {
+      try { perm = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e) {}
+    }
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    if (perm) perm.getTracks().forEach(t => t.stop());
+
+    const inputs  = devices.filter(d => d.kind === 'audioinput');
+    const outputs = devices.filter(d => d.kind === 'audiooutput');
+
+    const inputSel = document.getElementById('inputDeviceSel');
+    inputSel.innerHTML = '<option value="default">Default Microphone</option>';
+    inputs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || `Mic (${d.deviceId.slice(0,8)})`;
+      if (d.deviceId === audioSettings.inputDeviceId) opt.selected = true;
+      inputSel.appendChild(opt);
+    });
+
+    const outputSel = document.getElementById('outputDeviceSel');
+    outputSel.innerHTML = '<option value="default">Default Speaker</option>';
+    outputs.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || `Speaker (${d.deviceId.slice(0,8)})`;
+      if (d.deviceId === audioSettings.outputDeviceId) opt.selected = true;
+      outputSel.appendChild(opt);
+    });
+  } catch(e) { console.warn('device enum failed:', e); }
+
+  refreshUserVolumeList();
+}
+
+function showSection(s) {
+  document.querySelectorAll('.settings-section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('section-' + s).classList.add('active');
+  document.getElementById('nav-' + s).classList.add('active');
+  if (s === 'users') refreshUserVolumeList();
+}
+
+function refreshUserVolumeList() {
+  const list = document.getElementById('userVolumeList');
+  list.innerHTML = '';
+  const others = appState.users.filter(u => u.id !== myId);
+  if (!others.length) { list.innerHTML = '<p class="settings-desc">No other users online.</p>'; return; }
+  others.forEach(u => {
+    const vol = userVolumes[u.id] ?? 1.0;
+    const muted = mutedUsers.has(u.id);
+    const sm = u.serverMuted;
+    const row = document.createElement('div');
+    row.className = 'user-vol-item';
+    row.innerHTML = `<div class="uv-avatar">${(u.nickname||'?')[0].toUpperCase()}</div>` +
+      `<div class="uv-name">${esc(u.nickname||'?')}${u.id===appState.hostId?' 👑':''}</div>` +
+      `<input type="range" class="uv-vol" min="0" max="2" step="0.05" value="${vol}" oninput="setUserVolume('${u.id}',this.value)">` +
+      `<div class="uv-val" id="uvval-${u.id}">${Math.round(vol*100)}%</div>` +
+      `<button class="uv-btn${muted?' on':''}" onclick="toggleUserMute('${u.id}')">${muted?'🔇':'🔊'}</button>` +
+      (isHost ? `<button class="uv-btn${sm?' on':''}" onclick="hostMute('${u.id}')">${sm?'🚫':'🔈'}</button>` : '');
+    list.appendChild(row);
+  });
+}
+
+function applyInputDevice() {
+  audioSettings.inputDeviceId = document.getElementById('inputDeviceSel').value;
+  reacquireStream();
+}
+
+async function applyOutputDevice() {
+  audioSettings.outputDeviceId = document.getElementById('outputDeviceSel').value;
+  const audios = document.querySelectorAll('audio[id^="audio-"]');
+  for (const a of audios) {
+    if (a.setSinkId) try { await a.setSinkId(audioSettings.outputDeviceId); } catch(e) {}
+  }
+}
+
+function updateMicGain(val) {
+  audioSettings.micGain = parseFloat(val);
+  document.getElementById('micGainVal').textContent = Math.round(val * 100) + '%';
+  if (gainNode) gainNode.gain.value = audioSettings.micGain;
+}
+
+function updateOutputVol(val) {
+  audioSettings.outputVolume = parseFloat(val);
+  document.getElementById('outputVolVal').textContent = Math.round(val * 100) + '%';
+  document.querySelectorAll('audio[id^="audio-"]').forEach(a => {
+    const pid = a.id.replace('audio-', '');
+    if (!mutedUsers.has(pid)) a.volume = audioSettings.outputVolume;
+  });
+}
+
+function toggleRNNoise(val)      { audioSettings.rnnoiseEnabled = val;    reacquireStream(); }
+function toggleNoiseSup(val)     { audioSettings.noiseSuppression = val;  reacquireStream(); }
+function toggleEchoCancel(val)   { audioSettings.echoCancellation = val;  reacquireStream(); }
+function toggleAutoGain(val)     { audioSettings.autoGainControl = val;   reacquireStream(); }
+
+function copyEl(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = el.nextElementSibling;
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = '📋 Copy', 2000); }
+  });
+}
+
+// ---- WebRTC ----
+async function initiateCall(peerId) {
+  if (peers[peerId]) return;
+  const pc = makePeer(peerId);
+  peers[peerId] = pc;
+  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  wsSend({ type: 'rtc-offer', target: peerId, offer });
+}
+
+async function handleOffer(from, offer) {
+  if (peers[from]) peers[from].close();
+  const pc = makePeer(from);
+  peers[from] = pc;
+  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  wsSend({ type: 'rtc-answer', target: from, answer });
+}
+
+async function handleAnswer(from, answer) {
+  if (peers[from]) await peers[from].setRemoteDescription(new RTCSessionDescription(answer));
+}
+
+async function handleIce(from, candidate) {
+  if (peers[from] && candidate) try { await peers[from].addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) {}
+}
+
+function makePeer(peerId) {
+  const pc = new RTCPeerConnection(ICE_CFG);
+  pc.onicecandidate = e => { if (e.candidate) wsSend({ type: 'rtc-ice', target: peerId, candidate: e.candidate }); };
+  pc.ontrack = e => {
+    let audio = document.getElementById('audio-' + peerId);
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = 'audio-' + peerId;
+      audio.autoplay = true;
+      document.body.appendChild(audio);
+    }
+    audio.srcObject = e.streams[0];
+    audio.volume = userVolumes[peerId] ?? audioSettings.outputVolume;
+    audio.muted  = isDeafened || mutedUsers.has(peerId);
+    if (audioSettings.outputDeviceId !== 'default' && audio.setSinkId)
+      audio.setSinkId(audioSettings.outputDeviceId).catch(() => {});
+    startRemoteVAD(peerId, e.streams[0]);
+  };
+  pc.onconnectionstatechange = () => {
+    if (['disconnected','failed','closed'].includes(pc.connectionState)) closePeer(peerId);
+  };
+  return pc;
+}
+
+function closePeer(peerId) {
+  if (peers[peerId]) { peers[peerId].close(); delete peers[peerId]; }
+  document.getElementById('audio-' + peerId)?.remove();
+  cleanupRemoteVAD(peerId);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+wsConnect();
+</script>
+</body>
+</html>
+onnect();
+</script>
+</body>
+</html>
