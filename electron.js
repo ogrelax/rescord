@@ -19,6 +19,7 @@ function createWindow(url) {
     minWidth: 900,
     minHeight: 600,
     title: 'Rescord',
+    icon: path.join(__dirname, 'public', 'icon.ico'),
     backgroundColor: '#313338',
     webPreferences: {
       nodeIntegration: false,
@@ -29,6 +30,27 @@ function createWindow(url) {
   });
 
   win.loadURL(url);
+
+  // Grant mic, camera, screen capture permissions automatically
+  win.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
+    const allowed = ['media', 'display-capture', 'screen', 'camera', 'microphone', 'audioCapture', 'videoCapture'];
+    callback(allowed.includes(permission));
+  });
+
+  // Electron 17+: handle getDisplayMedia() picker. Auto-grant the primary screen.
+  if (win.webContents.session.setDisplayMediaRequestHandler) {
+    win.webContents.session.setDisplayMediaRequestHandler((req, callback) => {
+      const { desktopCapturer } = require('electron');
+      desktopCapturer.getSources({ types: ['screen', 'window'] }).then(sources => {
+        if (!sources.length) { callback({}); return; }
+        // Prefer a full screen over a window when available.
+        const screenSrc = sources.find(s => s.id.startsWith('screen:')) || sources[0];
+        // Only attach system audio (Windows loopback) if the renderer actually asked for it.
+        const wantsAudio = req && req.audioRequested;
+        callback(wantsAudio ? { video: screenSrc, audio: 'loopback' } : { video: screenSrc });
+      }).catch(err => { console.error('desktopCapturer failed:', err); callback({}); });
+    });
+  }
 
   // Open external links in the system browser, not Electron
   win.webContents.setWindowOpenHandler(({ url: u }) => {
@@ -46,8 +68,9 @@ function createWindow(url) {
 }
 
 function createTray() {
-  // Use a blank 16x16 icon if no icon file exists yet
-  const icon = nativeImage.createEmpty();
+  // Use the app icon; fall back to a blank icon if it can't be loaded
+  let icon = nativeImage.createFromPath(path.join(__dirname, 'public', 'icon.ico'));
+  if (icon.isEmpty()) icon = nativeImage.createEmpty();
   tray = new Tray(icon);
   tray.setToolTip('Rescord');
   tray.setContextMenu(Menu.buildFromTemplate([
