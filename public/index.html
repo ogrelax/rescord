@@ -530,9 +530,9 @@ let dfnetAssets = null; // cached { wasmBytes, modelBytes } for DeepFilterNet3
 let activeDenoiser = 'none'; // 'dfnet' | 'rnnoise' | 'off' | 'none'
 let dfnetGivenUp = false; // set true if DFNet3 fails at runtime → use RNNoise instead (never passthrough)
 
-// Fetch DeepFilterNet3 assets once (self-hosted under /dfnet/). We pass the raw wasm
-// bytes (not a pre-compiled WebAssembly.Module) so the worklet compiles it itself —
-// avoids any Module structured-clone quirks crossing into the AudioWorklet.
+// Fetch DeepFilterNet3 assets once (self-hosted under /dfnet/). We keep BOTH a main-thread
+// compiled Module (the proven path) AND the raw bytes, so the worklet can compile itself if
+// cloning a Module into the AudioWorklet ever fails in Electron.
 async function loadDFNet3Assets() {
   if (dfnetAssets) return dfnetAssets;
   const base = '/dfnet/';
@@ -540,7 +540,9 @@ async function loadDFNet3Assets() {
     fetch(base + 'df_bg.wasm').then(r => { if (!r.ok) throw new Error('df wasm ' + r.status); return r.arrayBuffer(); }),
     fetch(base + 'DeepFilterNet3_onnx.tar.gz').then(r => { if (!r.ok) throw new Error('df model ' + r.status); return r.arrayBuffer(); })
   ]);
-  dfnetAssets = { wasmBytes, modelBytes };
+  let wasmModule = null;
+  try { wasmModule = await WebAssembly.compile(wasmBytes); } catch (e) { console.warn('[DFNet3] main-thread compile failed, will pass bytes:', e); }
+  dfnetAssets = { wasmModule, wasmBytes, modelBytes };
   return dfnetAssets;
 }
 let screenStream = null, isSharingScreen = false;
@@ -799,11 +801,12 @@ async function buildAudioPipeline(stream) {
     let connected = false;
     // --- Primary denoiser: DeepFilterNet3 (deep filtering; ~20dB+ noise cut, speech preserved) ---
     if (!dfnetGivenUp) try {
-      const { wasmBytes, modelBytes } = await loadDFNet3Assets();
+      const { wasmModule, wasmBytes, modelBytes } = await loadDFNet3Assets();
       await audioCtx.audioWorklet.addModule('/dfnet/dfnet3-worklet.js');
-      dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', {
-        processorOptions: { wasmModule: wasmBytes, modelBytes, suppressionLevel: audioSettings.suppressionLevel }
-      });
+      const mkOpts = wf => ({ processorOptions: { wasmModule: wf, modelBytes, suppressionLevel: audioSettings.suppressionLevel } });
+      // Prefer the compiled Module (fast); if cloning it into the worklet throws, retry with raw bytes.
+      try { dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', mkOpts(wasmModule || wasmBytes)); }
+      catch (cloneErr) { console.warn('[DFNet3] Module clone failed, retrying with bytes:', cloneErr); dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', mkOpts(wasmBytes)); }
       dfnetNode.port.onmessage = ({ data }) => {
         if (data.type !== 'DF_STATUS') return;
         if (data.ok) { updateDenoiseStatus('dfnet'); }
