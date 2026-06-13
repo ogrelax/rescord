@@ -261,9 +261,14 @@ audio{display:none}
         <div class="settings-toggle-row">
           <div>
             <div class="toggle-label">AI Noise Suppression</div>
-            <div class="toggle-sub">RNNoise (werman) — deep-learning denoiser · <span id="rnnoiseStatus" style="color:var(--yellow)">loading…</span></div>
+            <div class="toggle-sub">DeepFilterNet3 — deep-filtering denoiser (RNNoise fallback) · <span id="rnnoiseStatus" style="color:var(--yellow)">loading…</span></div>
           </div>
           <label class="toggle-switch"><input type="checkbox" id="rnnoiseToggle" checked onchange="toggleRNNoise(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-group" id="suppressionGroup">
+          <h3>Suppression Strength <span id="suppressionVal">100%</span></h3>
+          <input type="range" id="suppressionSlider" class="settings-slider" min="0" max="100" step="5" value="100" oninput="updateSuppression(this.value)">
+          <p class="settings-desc">DeepFilterNet3 only. Higher = more aggressive noise removal; lower keeps more ambient/room tone. Applies live, no reconnect.</p>
         </div>
         <div class="settings-toggle-row">
           <div>
@@ -426,7 +431,22 @@ let history = {}, lanIp = location.hostname, serverPort = 3000, publicUrl = null
 // WebRTC / audio
 const peers = {};
 let localStream = null, rawStream = null;
-let audioCtx = null, gainNode = null, localAnalyser = null, rnnoiseNode = null;
+let audioCtx = null, gainNode = null, localAnalyser = null, rnnoiseNode = null, dfnetNode = null;
+let dfnetAssets = null; // cached { wasmModule, modelBytes } for DeepFilterNet3
+let activeDenoiser = 'none'; // 'dfnet' | 'rnnoise' | 'off' | 'none'
+
+// Fetch + compile DeepFilterNet3 assets once (self-hosted under /dfnet/).
+async function loadDFNet3Assets() {
+  if (dfnetAssets) return dfnetAssets;
+  const base = '/dfnet/';
+  const [wasmBytes, modelBytes] = await Promise.all([
+    fetch(base + 'df_bg.wasm').then(r => { if (!r.ok) throw new Error('df wasm ' + r.status); return r.arrayBuffer(); }),
+    fetch(base + 'DeepFilterNet3_onnx.tar.gz').then(r => { if (!r.ok) throw new Error('df model ' + r.status); return r.arrayBuffer(); })
+  ]);
+  const wasmModule = await WebAssembly.compile(wasmBytes); // compile off the audio thread
+  dfnetAssets = { wasmModule, modelBytes };
+  return dfnetAssets;
+}
 let screenStream = null, isSharingScreen = false;
 let localVADLoop = null;
 const remoteVAD = {}; // peerId -> { ctx, frame }
@@ -435,7 +455,7 @@ const remoteVAD = {}; // peerId -> { ctx, frame }
 const audioSettings = {
   inputDeviceId: 'default', outputDeviceId: 'default',
   noiseSuppression: true, echoCancellation: true, autoGainControl: false,
-  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true
+  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true, suppressionLevel: 100
 };
 const mutedUsers = new Set(), userVolumes = {};
 
@@ -671,7 +691,28 @@ async function buildAudioPipeline(stream) {
   source.connect(localAnalyser); // VAD tap (raw signal)
 
   if (audioSettings.rnnoiseEnabled) {
+    let connected = false;
+    // --- Primary denoiser: DeepFilterNet3 (deep filtering; ~20dB+ noise cut, speech preserved) ---
     try {
+      const { wasmModule, modelBytes } = await loadDFNet3Assets();
+      await audioCtx.audioWorklet.addModule('/dfnet/dfnet3-worklet.js');
+      dfnetNode = new AudioWorkletNode(audioCtx, 'deepfilter-audio-processor', {
+        processorOptions: { wasmModule, modelBytes, suppressionLevel: audioSettings.suppressionLevel }
+      });
+      dfnetNode.port.onmessage = ({ data }) => {
+        if (data.type === 'DF_STATUS') updateDenoiseStatus(data.ok ? 'dfnet' : 'unavailable');
+      };
+      source.connect(dfnetNode);
+      dfnetNode.connect(gainNode);
+      activeDenoiser = 'dfnet';
+      updateDenoiseStatus('loading-dfnet');
+      connected = true;
+    } catch (e) {
+      console.warn('[DFNet3] init failed, falling back to RNNoise:', e);
+      dfnetNode = null;
+    }
+    // --- Fallback denoiser: RNNoise ---
+    if (!connected) try {
       // The sync build (rnnoise-sync.js) has its OWN correct WASM inlined as base64,
       // purpose-built for AudioWorklets. Do NOT fetch/override rnnoise.wasm — that's the
       // mismatched old 0.1 async binary and forcing it via wasmBinary breaks the heap
@@ -735,28 +776,35 @@ registerProcessor('rnnoise-processor', RNNoiseProcessor);
       rnnoiseNode = new AudioWorkletNode(audioCtx, 'rnnoise-processor');
       let rnnoiseReady = false;
       rnnoiseNode.port.onmessage = ({ data }) => {
-        if (data.type === 'ready' && data.ok) { rnnoiseReady = true; updateRNNoiseStatus('active'); }
+        if (data.type === 'ready' && data.ok) { rnnoiseReady = true; updateDenoiseStatus('rnnoise'); }
       };
-      updateRNNoiseStatus('loading');
+      updateDenoiseStatus('loading-rnnoise');
       let rnnoiseRetries = 0;
       const pollReady = () => {
         if (!rnnoiseNode || rnnoiseReady) return;
         rnnoiseNode.port.postMessage({ type: 'ready?' });
         if (++rnnoiseRetries < 20) setTimeout(pollReady, 500);
-        else updateRNNoiseStatus('unavailable');
+        else updateDenoiseStatus('unavailable');
       };
       setTimeout(pollReady, 200);
       source.connect(rnnoiseNode);
       rnnoiseNode.connect(gainNode);
+      activeDenoiser = 'rnnoise';
+      connected = true;
     } catch(e) {
       console.warn('[RNNoise] init failed, bypassing:', e);
+    }
+    // --- Last resort: passthrough (no denoise) ---
+    if (!connected) {
       source.connect(gainNode);
-      updateRNNoiseStatus('unavailable');
+      activeDenoiser = 'none';
+      updateDenoiseStatus('unavailable');
     }
   } else {
-    rnnoiseNode = null;
+    rnnoiseNode = null; dfnetNode = null;
     source.connect(gainNode);
-    updateRNNoiseStatus('off');
+    activeDenoiser = 'off';
+    updateDenoiseStatus('off');
   }
 
   gainNode.connect(dest);
@@ -876,16 +924,19 @@ function setRemoteVAD(peerId, speaking) {
   document.querySelectorAll(`[data-vad="${peerId}"]`).forEach(el => el.classList.toggle('speaking', speaking));
 }
 
-// ---- RNNoise status ----
-function updateRNNoiseStatus(state) {
+// ---- Denoise status ----
+function updateDenoiseStatus(state) {
   const el = document.getElementById('rnnoiseStatus');
   if (!el) return;
   const map = {
-    active:      ['✓ active',      'var(--green)'],
-    unavailable: ['⚠ unavailable', 'var(--yellow)'],
-    error:       ['✗ failed',      'var(--red)'],
-    off:         ['off',           'var(--text-muted)'],
-    loading:     ['loading…',      'var(--yellow)'],
+    dfnet:          ['✓ DeepFilterNet3',      'var(--green)'],
+    rnnoise:        ['✓ RNNoise (fallback)',  'var(--green)'],
+    'loading-dfnet':['loading DeepFilterNet3…','var(--yellow)'],
+    'loading-rnnoise':['loading RNNoise…',    'var(--yellow)'],
+    unavailable:    ['⚠ unavailable',         'var(--yellow)'],
+    error:          ['✗ failed',              'var(--red)'],
+    off:            ['off',                   'var(--text-muted)'],
+    loading:        ['loading…',              'var(--yellow)'],
   };
   const [text, color] = map[state] || map.loading;
   el.textContent = text;
@@ -970,7 +1021,7 @@ function leaveVoice() {
   stopLocalVAD();
   if (rawStream)   { rawStream.getTracks().forEach(t => t.stop());   rawStream = null; }
   if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-  if (audioCtx)    { try { audioCtx.close(); } catch(e) {} audioCtx = null; gainNode = null; rnnoiseNode = null; }
+  if (audioCtx)    { try { audioCtx.close(); } catch(e) {} audioCtx = null; gainNode = null; rnnoiseNode = null; dfnetNode = null; activeDenoiser = 'none'; }
   document.getElementById('voiceBar').classList.remove('active');
   document.getElementById('voiceView').classList.remove('active');
   document.getElementById('chatView').style.display = 'flex';
@@ -1040,15 +1091,12 @@ async function openSettings() {
   document.getElementById('settingsModal').classList.remove('hidden');
   showSection('audio');
 
-  // Refresh RNNoise status each time settings opens
-  if (rnnoiseNode && audioSettings.rnnoiseEnabled) {
-    updateRNNoiseStatus('loading');
-    rnnoiseNode.port.postMessage({ type: 'ready?' });
-  } else if (!audioSettings.rnnoiseEnabled) {
-    updateRNNoiseStatus('off');
-  } else {
-    updateRNNoiseStatus('loading');
-  }
+  // Reflect current denoiser status each time settings opens
+  if (!audioSettings.rnnoiseEnabled) updateDenoiseStatus('off');
+  else if (activeDenoiser === 'dfnet')    updateDenoiseStatus('dfnet');
+  else if (activeDenoiser === 'rnnoise')  updateDenoiseStatus('rnnoise');
+  else if (activeDenoiser === 'none')     updateDenoiseStatus('unavailable');
+  else updateDenoiseStatus('loading');
 
   // Invite links
   const base = `http://${lanIp}:${serverPort}`;
@@ -1078,6 +1126,8 @@ async function openSettings() {
   document.getElementById('echoCancelToggle').checked = audioSettings.echoCancellation;
   document.getElementById('autoGainToggle').checked   = audioSettings.autoGainControl;
   document.getElementById('rnnoiseToggle').checked    = audioSettings.rnnoiseEnabled;
+  document.getElementById('suppressionSlider').value  = audioSettings.suppressionLevel;
+  document.getElementById('suppressionVal').textContent = audioSettings.suppressionLevel + '%';
 
   // Device enumeration — request mic permission first so we get real labels
   try {
@@ -1170,6 +1220,13 @@ function updateOutputVol(val) {
     const pid = a.id.replace('audio-', '');
     if (!mutedUsers.has(pid)) a.volume = audioSettings.outputVolume;
   });
+}
+
+function updateSuppression(val) {
+  audioSettings.suppressionLevel = parseInt(val, 10);
+  document.getElementById('suppressionVal').textContent = audioSettings.suppressionLevel + '%';
+  // Apply live to the running DeepFilterNet3 worklet — no stream reconnect needed
+  if (dfnetNode) dfnetNode.port.postMessage({ type: 'SET_SUPPRESSION_LEVEL', value: audioSettings.suppressionLevel });
 }
 
 function toggleRNNoise(val)      { audioSettings.rnnoiseEnabled = val;    reacquireStream(); }
