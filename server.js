@@ -60,6 +60,7 @@ function getState() {
     users: Array.from(users.values()).map(u => ({
       id: u.id,
       nickname: u.nickname,
+      avatar: u.avatar || null,
       textChannel: u.textChannel,
       voiceChannel: u.voiceChannel,
       serverMuted: u.serverMuted || false
@@ -74,7 +75,7 @@ wss.on('connection', (ws) => {
   const id = Math.random().toString(36).substr(2, 9);
   if (!hostId) hostId = id;
 
-  users.set(ws, { id, nickname: null, textChannel: 'general', voiceChannel: null, serverMuted: false });
+  users.set(ws, { id, nickname: null, avatar: null, textChannel: 'general', voiceChannel: null, serverMuted: false });
 
   sendTo(ws, {
     type: 'init',
@@ -95,6 +96,12 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'set-nickname') {
       user.nickname = (msg.nickname || '').trim().substring(0, 32) || 'Anonymous';
+      broadcastAll({ type: 'user-update', state: getState() });
+
+    } else if (msg.type === 'set-avatar') {
+      // avatar is a small data: URL (resized client-side). Cap length to avoid abuse.
+      const a = typeof msg.avatar === 'string' ? msg.avatar : null;
+      user.avatar = (a && a.length < 200000) ? a : null;
       broadcastAll({ type: 'user-update', state: getState() });
 
     } else if (msg.type === 'text-message') {

@@ -105,7 +105,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .voice-members-list{padding-left:28px}
 .voice-member-row{display:flex;align-items:center;gap:6px;padding:2px 8px;font-size:13px;color:var(--text-muted)}
 .vm-avatar{width:18px;height:18px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;flex-shrink:0}
-#voiceBar{background:#232428;padding:8px 10px;flex-shrink:0;display:none}
+#voiceBar{background:var(--bg-tertiary);padding:8px 10px;flex-shrink:0;display:none}
 #voiceBar.active{display:block}
 .vbar-channel{font-size:12px;color:var(--green);font-weight:600}
 .vbar-sub{font-size:11px;color:var(--text-muted);margin-bottom:6px}
@@ -116,7 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .vbar-btn.deaf-btn{background:var(--bg-active);color:var(--text-primary)}
 .vbar-btn.deaf-btn.on{background:var(--yellow);color:#111}
 .vbar-btn.disc-btn{background:var(--red);color:#fff}
-#userBar{background:#232428;padding:8px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+#userBar{background:var(--bg-tertiary);padding:8px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
 .my-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
 .my-name{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .my-tag{font-size:11px;color:var(--text-muted)}
@@ -140,7 +140,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .msg-author{font-weight:600;font-size:15px;cursor:pointer}
 .msg-author:hover{text-decoration:underline}
 .msg-time{font-size:11px;color:var(--text-muted)}
-.msg-text{font-size:15px;line-height:1.375;word-break:break-word;color:#dcddde}
+.msg-text{font-size:15px;line-height:1.375;word-break:break-word;color:var(--text-primary)}
 #inputArea{padding:0 16px 24px;flex-shrink:0}
 .input-wrap{background:var(--bg-active);border-radius:8px;display:flex;align-items:center;padding:0 16px;gap:8px}
 #msgInput{flex:1;background:none;border:none;color:var(--text-primary);font-size:15px;padding:11px 0;outline:none}
@@ -178,11 +178,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--bg-tertiary);border-radius:3px}
 audio{display:none}
+
+/* ===== Theme palettes (default :root above = Mint) ===== */
+html[data-theme="graphite"]{
+  --bg-primary:#1e1f22; --bg-secondary:#2b2d31; --bg-tertiary:#313338; --bg-hover:#35373c; --bg-active:#404249;
+  --text-primary:#f2f3f5; --text-muted:#b5bac1; --text-channel:#949ba4;
+  --accent:#5865f2; --accent-hover:#4752c4; --green:#23a55a; --red:#f23f43; --yellow:#f0b132; --border:#1f2023;
+}
+html[data-theme="ocean"]{
+  --bg-primary:#0f1620; --bg-secondary:#16202c; --bg-tertiary:#1d2a38; --bg-hover:#243443; --bg-active:#2b3e50;
+  --text-primary:#e6eef7; --text-muted:#8fa3b8; --text-channel:#a8bccf;
+  --accent:#4aa3df; --accent-hover:#3b87bd; --green:#4ec9a8; --red:#e06c75; --yellow:#e5c07b; --border:#22303f;
+}
+html[data-theme="dusk"]{
+  --bg-primary:#1a1626; --bg-secondary:#221d33; --bg-tertiary:#2b2440; --bg-hover:#352b4e; --bg-active:#3f3260;
+  --text-primary:#f0e9ff; --text-muted:#b9a9d6; --text-channel:#c5b8e0;
+  --accent:#bd93f9; --accent-hover:#a87fe0; --green:#50fa7b; --red:#ff5555; --yellow:#f1fa8c; --border:#2f2747;
+}
+html[data-theme="light"]{
+  --bg-primary:#ffffff; --bg-secondary:#f2f3f5; --bg-tertiary:#e3e5e8; --bg-hover:#e0e1e5; --bg-active:#d4d7dc;
+  --text-primary:#1a1a1e; --text-muted:#5c6069; --text-channel:#4e5058;
+  --accent:#5865f2; --accent-hover:#4752c4; --green:#1a8a4e; --red:#d83c3e; --yellow:#b8860b; --border:#d7d9dd;
+}
+
+/* Avatar images */
+.av-img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+
+/* Theme swatches */
+.theme-grid{display:flex;gap:10px;flex-wrap:wrap}
+.theme-swatch{width:84px;border-radius:8px;border:2px solid transparent;cursor:pointer;overflow:hidden;background:var(--bg-tertiary)}
+.theme-swatch.active{border-color:var(--accent)}
+.theme-swatch .sw-bar{height:38px;display:flex}
+.theme-swatch .sw-bar i{flex:1}
+.theme-swatch .sw-name{font-size:11px;text-align:center;padding:4px;color:var(--text-primary)}
+
+/* Profile avatar editor */
+.avatar-edit{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.avatar-edit .big-av{width:80px;height:80px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;overflow:hidden;flex-shrink:0}
+
+/* Right-click user context menu */
+#ctxMenu{position:fixed;z-index:400;display:none;width:210px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#ctxMenu .ctx-name{font-weight:700;font-size:14px;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ctxMenu .ctx-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px}
+#ctxMenu input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:10px}
+#ctxMenu .ctx-btn{width:100%;padding:7px;border:none;border-radius:4px;background:var(--bg-active);color:var(--text-primary);cursor:pointer;font-size:13px}
+#ctxMenu .ctx-btn:hover{background:var(--bg-hover)}
 </style>
 </head>
 <body>
 
 <div id="kickedBanner">You were removed by the host.</div>
+<div id="ctxMenu"></div>
 
 <!-- Nickname -->
 <div class="modal-overlay" id="nicknameModal">
@@ -219,6 +265,8 @@ audio{display:none}
     <div class="settings-nav">
       <div class="settings-nav-cat">Settings</div>
       <div class="settings-nav-item active" id="nav-audio" onclick="showSection('audio')">🎙 Voice & Audio</div>
+      <div class="settings-nav-item" id="nav-profile" onclick="showSection('profile')">🙂 Profile</div>
+      <div class="settings-nav-item" id="nav-appearance" onclick="showSection('appearance')">🎨 Appearance</div>
       <div class="settings-nav-item" id="nav-invite" onclick="showSection('invite')">🔗 Invite</div>
       <div class="settings-nav-item" id="nav-users" onclick="showSection('users')">👥 Manage Users</div>
       <div class="settings-nav-divider"></div>
@@ -290,6 +338,51 @@ audio{display:none}
             <div class="toggle-sub">Browser auto-adjusts mic level</div>
           </div>
           <label class="toggle-switch"><input type="checkbox" id="autoGainToggle" onchange="toggleAutoGain(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-toggle-row">
+          <div>
+            <div class="toggle-label">UI Sounds</div>
+            <div class="toggle-sub">Join/leave, mute, deafen & stream blips</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="soundsToggle" checked onchange="toggleSounds(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-group" id="broadcastHint" style="display:none">
+          <h3>🟢 NVIDIA Broadcast detected</h3>
+          <p class="settings-desc">For the cleanest mic, select the NVIDIA Broadcast device above. When you do, in-app AI suppression auto-disables to avoid double-processing.</p>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="settings-section" id="section-profile">
+        <h2>Profile</h2>
+        <div class="settings-group">
+          <h3>Profile Picture</h3>
+          <div class="avatar-edit">
+            <div class="big-av" id="profileBigAv">?</div>
+            <div>
+              <button class="mic-test-btn" onclick="document.getElementById('avatarFileInput').click()">Upload Image</button>
+              <button class="mic-test-btn" style="background:var(--bg-active)" onclick="removeAvatar()">Remove</button>
+              <p class="settings-desc" style="margin-top:8px">Square works best. Stored on this device and shown to everyone.</p>
+            </div>
+          </div>
+          <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="onAvatarPicked(event)">
+        </div>
+        <div class="settings-group">
+          <h3>Display Name</h3>
+          <div class="invite-box">
+            <input id="profileNameInput" class="invite-url" style="background:none;border:none;color:var(--text-primary);outline:none" maxlength="32" placeholder="Your name">
+            <button class="invite-copy-btn" onclick="saveDisplayName()">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="settings-section" id="section-appearance">
+        <h2>Appearance</h2>
+        <div class="settings-group">
+          <h3>Theme</h3>
+          <p class="settings-desc">Pick a palette. Applies instantly and is remembered.</p>
+          <div class="theme-grid" id="themeGrid"></div>
         </div>
       </div>
 
@@ -423,6 +516,7 @@ const ICE_CFG = {
 
 // ---- State ----
 let ws, myId, myNickname = '';
+let myAvatar = (() => { try { return localStorage.getItem('rescord_avatar') || null; } catch(e){ return null; } })();
 let currentText = 'general', currentVoice = null;
 let isMuted = false, isDeafened = false, isServerMuted = false, isHost = false;
 let appState = { users: [], textChannels: [], voiceChannels: [], hostId: null };
@@ -456,7 +550,9 @@ const remoteVAD = {}; // peerId -> { ctx, frame }
 const audioSettings = {
   inputDeviceId: 'default', outputDeviceId: 'default',
   noiseSuppression: true, echoCancellation: true, autoGainControl: false,
-  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true, suppressionLevel: 100
+  micGain: 1.0, outputVolume: 1.0, rnnoiseEnabled: true, suppressionLevel: 100,
+  sounds: (() => { try { return localStorage.getItem('rescord_sounds') !== '0'; } catch(e){ return true; } })(),
+  theme: (() => { try { return localStorage.getItem('rescord_theme') || 'mint'; } catch(e){ return 'mint'; } })()
 };
 const mutedUsers = new Set(), userVolumes = {};
 
@@ -481,6 +577,7 @@ function handleMsg(msg) {
       isHost = appState.hostId === myId;
       if (myNickname) {
         wsSend({ type: 'set-nickname', nickname: myNickname });
+        if (myAvatar) sendAvatar();
         renderChannels(); renderMessages(); renderMembers();
       }
       break;
@@ -496,9 +593,10 @@ function handleMsg(msg) {
       if (msg.message.channel === currentText) appendMessage(msg.message);
       break;
     case 'user-joined-voice':
-      if (currentVoice && msg.channel === currentVoice) initiateCall(msg.userId);
+      if (currentVoice && msg.channel === currentVoice) { initiateCall(msg.userId); sfx('userJoin'); }
       break;
     case 'user-left-voice':
+      if (currentVoice && msg.channel === currentVoice) sfx('userLeave');
       closePeer(msg.userId); updateVoiceView(); break;
     case 'voice-peers':
       msg.peers.forEach(pid => initiateCall(pid)); break;
@@ -523,8 +621,9 @@ function submitNickname() {
   myNickname = name;
   document.getElementById('nicknameModal').classList.add('hidden');
   document.getElementById('myName').textContent = name;
-  document.getElementById('myAvatar').textContent = name[0].toUpperCase();
+  renderMyAvatar();
   wsSend({ type: 'set-nickname', nickname: name });
+  if (myAvatar) sendAvatar();
   renderChannels(); renderMessages(); renderMembers();
 }
 document.getElementById('nicknameInput').onkeydown = e => { if (e.key === 'Enter') submitNickname(); };
@@ -536,7 +635,7 @@ document.getElementById('nicknameInput').onkeydown = e => { if (e.key === 'Enter
     myNickname = n.trim().slice(0, 32);
     document.getElementById('nicknameModal').classList.add('hidden');
     document.getElementById('myName').textContent = myNickname;
-    document.getElementById('myAvatar').textContent = myNickname[0].toUpperCase();
+    renderMyAvatar();
   }
 })();
 
@@ -577,7 +676,8 @@ function renderChannels() {
       members.forEach(u => {
         const r = document.createElement('div');
         r.className = 'voice-member-row';
-        r.innerHTML = `<div class="vm-avatar vad-ring" data-vad="${u.id}">${(u.nickname||'?')[0].toUpperCase()}</div>${esc(u.nickname||'?')}`;
+        r.innerHTML = `<div class="vm-avatar vad-ring" data-vad="${u.id}">${avatarInner(u)}</div>${esc(u.nickname||'?')}`;
+        if (u.id !== myId) { r.setAttribute('data-ctx-user', u.id); r.oncontextmenu = e => showUserCtx(e, u.id); r.style.cursor = 'context-menu'; }
         sub.appendChild(r);
       });
       vl.appendChild(sub);
@@ -615,9 +715,10 @@ function appendMessage(msg, scroll = true) {
   lastSenderId = msg.senderId; lastSenderTime = msg.timestamp;
   const el = document.createElement('div');
   el.className = 'msg-group' + (compact ? ' compact' : '');
+  const msgUser = appState.users.find(u => u.id === msg.senderId) || { nickname: msg.sender, avatar: null };
   el.innerHTML = compact
     ? `<div class="msg-left"><span class="msg-ts">${ts}</span></div><div class="msg-body"><div class="msg-text">${esc(msg.content)}</div></div>`
-    : `<div class="msg-left"><div class="msg-avatar">${(msg.sender||'?')[0].toUpperCase()}</div></div><div class="msg-body"><div class="msg-hdr"><span class="msg-author">${esc(msg.sender)}</span><span class="msg-time">${ts}</span></div><div class="msg-text">${esc(msg.content)}</div></div>`;
+    : `<div class="msg-left"><div class="msg-avatar">${avatarInner(msgUser)}</div></div><div class="msg-body"><div class="msg-hdr"><span class="msg-author">${esc(msg.sender)}</span><span class="msg-time">${ts}</span></div><div class="msg-text">${esc(msg.content)}</div></div>`;
   c.appendChild(el);
   if (scroll) c.scrollTop = c.scrollHeight;
 }
@@ -657,7 +758,8 @@ function renderMembers() {
       btns += `<button class="mem-btn show" onclick="hostKick('${u.id}')" style="color:var(--red)">✕</button>`;
     }
 
-    el.innerHTML = `<div class="mem-avatar vad-ring" ${vadAttr}>${(u.nickname||'?')[0].toUpperCase()}<div class="mem-dot"></div></div><div class="mem-name">${nameHtml}</div><div class="mem-actions">${btns}</div>`;
+    el.innerHTML = `<div class="mem-avatar vad-ring" ${vadAttr}>${avatarInner(u)}<div class="mem-dot"></div></div><div class="mem-name">${nameHtml}</div><div class="mem-actions">${btns}</div>`;
+    if (!isSelf) { el.setAttribute('data-ctx-user', u.id); el.oncontextmenu = e => showUserCtx(e, u.id); }
     list.appendChild(el);
   });
 }
@@ -681,6 +783,7 @@ async function buildAudioPipeline(stream) {
   // Close previous context
   if (audioCtx) { try { audioCtx.close(); } catch(e) {} }
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') { try { await audioCtx.resume(); } catch(e) {} }
 
   gainNode      = audioCtx.createGain();
   gainNode.gain.value = audioSettings.micGain;
@@ -868,9 +971,9 @@ function startLocalVAD() {
       fill.style.width = (level * 100) + '%';
       fill.style.background = level > 0.8 ? 'var(--red)' : level > 0.5 ? 'var(--yellow)' : 'var(--green)';
     }
-    if (level > 0.06 && !speaking) {
+    if (level > 0.04 && !speaking) {
       speaking = true; setMyVAD(true);
-    } else if (level <= 0.04 && speaking) {
+    } else if (level <= 0.025 && speaking) {
       clearTimeout(speakTimeout);
       speakTimeout = setTimeout(() => { speaking = false; setMyVAD(false); }, 350);
     }
@@ -896,10 +999,13 @@ function startRemoteVAD(peerId, stream) {
   cleanupRemoteVAD(peerId);
   try {
     const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
     const source   = ctx.createMediaStreamSource(stream);
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 256;
     source.connect(analyser);
+    // Keep the graph pulling data in Chromium (analyser-only on a remote track can idle).
+    const sink = ctx.createGain(); sink.gain.value = 0; source.connect(sink); sink.connect(ctx.destination);
     const data = new Uint8Array(analyser.frequencyBinCount);
     let speaking = false, timeout = null;
     let frameId;
@@ -907,8 +1013,8 @@ function startRemoteVAD(peerId, stream) {
       analyser.getByteFrequencyData(data);
       let sum = 0; for (let i = 0; i < data.length; i++) sum += data[i];
       const avg = sum / data.length;
-      if (avg > 14 && !speaking) { speaking = true; setRemoteVAD(peerId, true); }
-      else if (avg <= 10 && speaking) {
+      if (avg > 10 && !speaking) { speaking = true; setRemoteVAD(peerId, true); }
+      else if (avg <= 6 && speaking) {
         clearTimeout(timeout);
         timeout = setTimeout(() => { speaking = false; setRemoteVAD(peerId, false); }, 350);
       }
@@ -1010,6 +1116,7 @@ async function joinVoice(ch) {
   catch(e) { alert('Mic access denied — cannot join voice.'); return; }
   if (currentVoice) { Object.keys(peers).forEach(closePeer); wsSend({ type: 'leave-voice' }); }
   currentVoice = ch;
+  sfx('joinSelf');
   wsSend({ type: 'join-voice', channel: ch });
   document.getElementById('chatView').style.display = 'none';
   document.getElementById('voiceView').classList.add('active');
@@ -1023,6 +1130,7 @@ async function joinVoice(ch) {
 
 function leaveVoice() {
   if (!currentVoice) return;
+  sfx('leaveSelf');
   stopScreenShare();
   wsSend({ type: 'leave-voice' });
   currentVoice = null;
@@ -1045,6 +1153,7 @@ function toggleMute() {
   const btn = document.getElementById('muteBtn');
   btn.textContent = isMuted ? '🔇 Unmute' : '🎤 Mute';
   btn.classList.toggle('on', isMuted);
+  sfx(isMuted ? 'muteOn' : 'muteOff');
 }
 
 function toggleDeafen() {
@@ -1053,6 +1162,7 @@ function toggleDeafen() {
   const btn = document.getElementById('deafBtn');
   btn.textContent = isDeafened ? '🔇 Undeaf' : '🔊 Deaf';
   btn.classList.toggle('on', isDeafened);
+  sfx(isDeafened ? 'deafenOn' : 'deafenOff');
 }
 
 function updateVoiceView() {
@@ -1064,7 +1174,8 @@ function updateVoiceView() {
     const card = document.createElement('div');
     card.className = 'vp-card';
     const vadAttr = u.id === myId ? 'data-my-vad="1"' : `data-vad="${u.id}"`;
-    card.innerHTML = `<div class="vp-avatar vad-ring" ${vadAttr}>${(u.nickname||'?')[0].toUpperCase()}</div><div class="vp-name">${esc(u.nickname||'?')}${u.id===appState.hostId?' 👑':''}</div>`;
+    card.innerHTML = `<div class="vp-avatar vad-ring" ${vadAttr}>${avatarInner(u)}</div><div class="vp-name">${esc(u.nickname||'?')}${u.id===appState.hostId?' 👑':''}</div>`;
+    if (u.id !== myId) { card.setAttribute('data-ctx-user', u.id); card.oncontextmenu = e => showUserCtx(e, u.id); card.style.cursor = 'context-menu'; }
     container.appendChild(card);
   });
 }
@@ -1137,6 +1248,11 @@ async function openSettings() {
   document.getElementById('rnnoiseToggle').checked    = audioSettings.rnnoiseEnabled;
   document.getElementById('suppressionSlider').value  = audioSettings.suppressionLevel;
   document.getElementById('suppressionVal').textContent = audioSettings.suppressionLevel + '%';
+  document.getElementById('soundsToggle').checked     = audioSettings.sounds;
+  // Profile + Appearance
+  document.getElementById('profileNameInput').value = myNickname || '';
+  renderMyAvatar();
+  renderThemeGrid();
 
   // Device enumeration — request mic permission first so we get real labels
   try {
@@ -1159,6 +1275,9 @@ async function openSettings() {
       if (d.deviceId === audioSettings.inputDeviceId) opt.selected = true;
       inputSel.appendChild(opt);
     });
+    // NVIDIA Broadcast: show hint if its virtual mic is available
+    const hasBroadcast = inputs.some(d => /nvidia broadcast/i.test(d.label || ''));
+    const bh = document.getElementById('broadcastHint'); if (bh) bh.style.display = hasBroadcast ? '' : 'none';
 
     const outputSel = document.getElementById('outputDeviceSel');
     outputSel.innerHTML = '<option value="default">Default Speaker</option>';
@@ -1180,6 +1299,8 @@ function showSection(s) {
   document.getElementById('section-' + s).classList.add('active');
   document.getElementById('nav-' + s).classList.add('active');
   if (s === 'users') refreshUserVolumeList();
+  if (s === 'appearance') renderThemeGrid();
+  if (s === 'profile') { document.getElementById('profileNameInput').value = myNickname || ''; renderMyAvatar(); }
 }
 
 function refreshUserVolumeList() {
@@ -1193,7 +1314,7 @@ function refreshUserVolumeList() {
     const sm = u.serverMuted;
     const row = document.createElement('div');
     row.className = 'user-vol-item';
-    row.innerHTML = `<div class="uv-avatar">${(u.nickname||'?')[0].toUpperCase()}</div>` +
+    row.innerHTML = `<div class="uv-avatar">${avatarInner(u)}</div>` +
       `<div class="uv-name">${esc(u.nickname||'?')}${u.id===appState.hostId?' 👑':''}</div>` +
       `<input type="range" class="uv-vol" min="0" max="2" step="0.05" value="${vol}" oninput="setUserVolume('${u.id}',this.value)">` +
       `<div class="uv-val" id="uvval-${u.id}">${Math.round(vol*100)}%</div>` +
@@ -1204,7 +1325,15 @@ function refreshUserVolumeList() {
 }
 
 function applyInputDevice() {
-  audioSettings.inputDeviceId = document.getElementById('inputDeviceSel').value;
+  const sel = document.getElementById('inputDeviceSel');
+  audioSettings.inputDeviceId = sel.value;
+  // If the NVIDIA Broadcast virtual mic is chosen, disable in-app AI NS to avoid double-processing.
+  const label = (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].textContent) || '';
+  if (/nvidia broadcast/i.test(label) && audioSettings.rnnoiseEnabled) {
+    audioSettings.rnnoiseEnabled = false;
+    const t = document.getElementById('rnnoiseToggle'); if (t) t.checked = false;
+    updateDenoiseStatus('off');
+  }
   reacquireStream();
 }
 
@@ -1289,7 +1418,8 @@ function makePeer(peerId) {
   pc.ontrack = e => {
     if (e.track.kind === 'video') {
       showScreenPreview(peerId, e.streams[0]);
-      e.track.onended = () => removeScreenPreview(peerId);
+      sfx('streamStart');
+      e.track.onended = () => { removeScreenPreview(peerId); sfx('streamEnd'); };
       return;
     }
     let audio = document.getElementById('audio-' + peerId);
@@ -1336,6 +1466,7 @@ async function toggleScreenShare() {
       screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
     }
     isSharingScreen = true;
+    sfx('streamStart');
     const btn = document.getElementById('shareBtn');
     if (btn) { btn.textContent = '🛑 Stop Share'; btn.classList.add('on'); }
     const videoTrack = screenStream.getVideoTracks()[0];
@@ -1358,6 +1489,7 @@ function stopScreenShare() {
   if (!isSharingScreen && !screenStream) return;
   if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
   isSharingScreen = false;
+  sfx('streamEnd');
   const btn = document.getElementById('shareBtn');
   if (btn) { btn.textContent = '🖥 Share Screen'; btn.classList.remove('on'); }
   Object.values(peers).forEach(pc => {
@@ -1399,6 +1531,152 @@ function updateScreenGrid() {
   const grid = document.getElementById('screenGrid');
   if (grid) grid.style.display = grid.children.length > 0 ? 'block' : 'none';
 }
+
+// ===== Avatars =====
+function avatarInner(user) {
+  if (user && user.avatar) return `<img class="av-img" src="${user.avatar}" alt="">`;
+  return (((user && user.nickname) || '?')[0] || '?').toUpperCase();
+}
+function renderMyAvatar() {
+  const inner = myAvatar ? `<img class="av-img" src="${myAvatar}" alt="">` : (((myNickname || '?')[0] || '?').toUpperCase());
+  const a = document.getElementById('myAvatar'); if (a) a.innerHTML = inner;
+  const b = document.getElementById('profileBigAv'); if (b) b.innerHTML = inner;
+}
+function sendAvatar() { wsSend({ type: 'set-avatar', avatar: myAvatar }); }
+function onAvatarPicked(ev) {
+  const file = ev.target.files && ev.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const size = 128, c = document.createElement('canvas'); c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const s = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+      let dataUrl = c.toDataURL('image/jpeg', 0.85);
+      if (dataUrl.length > 180000) dataUrl = c.toDataURL('image/jpeg', 0.6);
+      myAvatar = dataUrl;
+      try { localStorage.setItem('rescord_avatar', dataUrl); } catch (e) {}
+      sendAvatar(); renderMyAvatar(); renderMembers(); updateVoiceView();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  ev.target.value = '';
+}
+function removeAvatar() {
+  myAvatar = null;
+  try { localStorage.removeItem('rescord_avatar'); } catch (e) {}
+  sendAvatar(); renderMyAvatar(); renderMembers(); updateVoiceView();
+}
+function saveDisplayName() {
+  const v = document.getElementById('profileNameInput').value.trim().slice(0, 32);
+  if (!v) return;
+  myNickname = v;
+  document.getElementById('myName').textContent = v;
+  wsSend({ type: 'set-nickname', nickname: v });
+  renderMyAvatar();
+}
+
+// ===== UI Sounds (synthesized) =====
+let sfxCtx = null;
+const SFX = {
+  joinSelf:   [{f:392,f2:587,d:.12,t:0,v:.18},{f:587,f2:784,d:.13,t:.1,v:.18}],
+  leaveSelf:  [{f:587,f2:392,d:.14,t:0,v:.18},{f:392,f2:262,d:.14,t:.12,v:.16}],
+  userJoin:   [{f:523,f2:698,d:.12,t:0,v:.13}],
+  userLeave:  [{f:523,f2:349,d:.14,t:0,v:.13}],
+  muteOn:     [{f:330,d:.07,t:0,type:'square',v:.1}],
+  muteOff:    [{f:523,d:.07,t:0,type:'square',v:.1}],
+  deafenOn:   [{f:294,d:.09,t:0,type:'square',v:.1},{f:196,d:.1,t:.05,type:'square',v:.1}],
+  deafenOff:  [{f:392,d:.09,t:0,type:'square',v:.1},{f:587,d:.1,t:.05,type:'square',v:.1}],
+  streamStart:[{f:440,f2:880,d:.18,t:0,type:'triangle',v:.16}],
+  streamEnd:  [{f:880,f2:440,d:.18,t:0,type:'triangle',v:.16}]
+};
+function sfx(name) {
+  if (!audioSettings.sounds) return;
+  const seq = SFX[name]; if (!seq) return;
+  try {
+    if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (sfxCtx.state === 'suspended') sfxCtx.resume();
+    const t0 = sfxCtx.currentTime;
+    seq.forEach(s => {
+      const o = sfxCtx.createOscillator(), g = sfxCtx.createGain();
+      o.type = s.type || 'sine';
+      const st = t0 + s.t, en = st + s.d;
+      o.frequency.setValueAtTime(s.f, st);
+      if (s.f2) o.frequency.exponentialRampToValueAtTime(Math.max(1, s.f2), en);
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(s.v ?? .15, st + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, en);
+      o.connect(g); g.connect(sfxCtx.destination);
+      o.start(st); o.stop(en + 0.03);
+    });
+  } catch (e) {}
+}
+function toggleSounds(v) {
+  audioSettings.sounds = v;
+  try { localStorage.setItem('rescord_sounds', v ? '1' : '0'); } catch (e) {}
+  if (v) sfx('userJoin');
+}
+
+// ===== Themes =====
+const THEME_META = [
+  { id:'mint',     name:'Mint',     cols:['#0d0d0d','#182820','#6ECBA4','#FFCB9A'] },
+  { id:'graphite', name:'Graphite', cols:['#1e1f22','#313338','#5865f2','#23a55a'] },
+  { id:'ocean',    name:'Ocean',    cols:['#0f1620','#1d2a38','#4aa3df','#4ec9a8'] },
+  { id:'dusk',     name:'Dusk',     cols:['#1a1626','#2b2440','#bd93f9','#50fa7b'] },
+  { id:'light',    name:'Light',    cols:['#ffffff','#e3e5e8','#5865f2','#1a8a4e'] }
+];
+function applyTheme(t) {
+  if (!THEME_META.some(m => m.id === t)) t = 'mint';
+  document.documentElement.setAttribute('data-theme', t);
+  audioSettings.theme = t;
+  try { localStorage.setItem('rescord_theme', t); } catch (e) {}
+  document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
+}
+function renderThemeGrid() {
+  const g = document.getElementById('themeGrid'); if (!g) return;
+  g.innerHTML = '';
+  THEME_META.forEach(m => {
+    const el = document.createElement('div');
+    el.className = 'theme-swatch' + (m.id === audioSettings.theme ? ' active' : '');
+    el.dataset.theme = m.id;
+    el.innerHTML = `<div class="sw-bar">${m.cols.map(c => `<i style="background:${c}"></i>`).join('')}</div><div class="sw-name">${m.name}</div>`;
+    el.onclick = () => applyTheme(m.id);
+    g.appendChild(el);
+  });
+}
+
+// ===== Right-click user → per-user volume =====
+function showUserCtx(ev, userId) {
+  ev.preventDefault(); ev.stopPropagation();
+  if (userId === myId) return;
+  const u = appState.users.find(x => x.id === userId); if (!u) return;
+  const vol = userVolumes[userId] ?? audioSettings.outputVolume;
+  const muted = mutedUsers.has(userId);
+  const menu = document.getElementById('ctxMenu');
+  menu.innerHTML =
+    `<div class="ctx-name">${esc(u.nickname || '?')}</div>` +
+    `<div class="ctx-row"><span>Incoming volume</span><span id="ctxVolVal">${Math.round(vol * 100)}%</span></div>` +
+    `<input type="range" min="0" max="2" step="0.05" value="${vol}" oninput="ctxSetVol('${userId}',this.value)">` +
+    `<button class="ctx-btn" onclick="ctxToggleMute('${userId}')">${muted ? '🔊 Unmute user' : '🔇 Mute user'}</button>`;
+  menu.style.display = 'block';
+  const mw = 210, mh = menu.offsetHeight || 150;
+  menu.style.left = Math.min(ev.clientX, window.innerWidth - mw - 8) + 'px';
+  menu.style.top = Math.min(ev.clientY, window.innerHeight - mh - 8) + 'px';
+}
+function ctxSetVol(id, v) { setUserVolume(id, v); const el = document.getElementById('ctxVolVal'); if (el) el.textContent = Math.round(v * 100) + '%'; }
+function ctxToggleMute(id) { toggleUserMute(id); hideCtx(); }
+function hideCtx() { const m = document.getElementById('ctxMenu'); if (m) m.style.display = 'none'; }
+document.getElementById('ctxMenu').addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', hideCtx);
+window.addEventListener('blur', hideCtx);
+document.addEventListener('contextmenu', e => { if (!e.target.closest('[data-ctx-user]')) hideCtx(); });
+
+// ===== Init theme + avatar on load =====
+applyTheme(audioSettings.theme);
+renderMyAvatar();
+{ const st = document.getElementById('soundsToggle'); if (st) st.checked = audioSettings.sounds; }
 
 wsConnect();
 </script>
