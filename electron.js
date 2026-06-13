@@ -7,7 +7,8 @@ let tray = null;
 let serverProcess = null;
 
 // The URL to load — Railway URL in production, localhost in dev
-const RESCORD_URL = process.env.RESCORD_URL || null;
+const CLOUD_URL   = 'https://content-balance-production-cd65.up.railway.app';
+const RESCORD_URL = process.env.RESCORD_URL || (app.isPackaged ? CLOUD_URL : null);
 const LOCAL_PORT  = process.env.PORT || 3000;
 const LOCAL_URL   = `http://localhost:${LOCAL_PORT}`;
 

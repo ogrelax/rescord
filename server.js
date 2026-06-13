@@ -7,7 +7,11 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-app.use(express.static('public'));
+app.use(express.static('public', {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.wasm')) res.setHeader('Content-Type', 'application/wasm');
+  }
+}));
 
 // Railway health check
 app.get('/health', (req, res) => res.json({ ok: true }));

@@ -672,7 +672,8 @@ async function buildAudioPipeline(stream) {
 
   if (audioSettings.rnnoiseEnabled) {
     try {
-      await audioCtx.audioWorklet.addModule('/rnnoise-worklet.js');
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('rnnoise timeout')), 5000));
+      await Promise.race([audioCtx.audioWorklet.addModule('/rnnoise-worklet.js'), timeout]);
       rnnoiseNode = new AudioWorkletNode(audioCtx, 'rnnoise-processor');
       // Wire up persistent message handler for status updates
       rnnoiseNode.port.onmessage = ({ data }) => {
@@ -684,6 +685,7 @@ async function buildAudioPipeline(stream) {
         if (!rnnoiseNode) return;
         rnnoiseNode.port.postMessage({ type: 'ready?' });
         if (++rnnoiseRetries < 10) setTimeout(pollReady, 1000);
+        else updateRNNoiseStatus('unavailable');
       };
       setTimeout(pollReady, 800);
       source.connect(rnnoiseNode);
@@ -691,7 +693,7 @@ async function buildAudioPipeline(stream) {
     } catch(e) {
       console.warn('[RNNoise] worklet load failed, bypassing:', e);
       source.connect(gainNode);
-      updateRNNoiseStatus('error');
+      updateRNNoiseStatus('unavailable');
     }
   } else {
     rnnoiseNode = null;
