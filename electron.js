@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, shell, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, shell, nativeImage, ipcMain } = require('electron');
 const path = require('path');
 const http = require('http');
 
@@ -12,6 +12,32 @@ const RESCORD_URL = process.env.RESCORD_URL || (app.isPackaged ? CLOUD_URL : nul
 const LOCAL_PORT  = process.env.PORT || 3000;
 const LOCAL_URL   = `http://localhost:${LOCAL_PORT}`;
 
+// ─── IPC: Native Noise Suppression Installer ─────────────────────────────────
+ipcMain.handle('install-native-suppression', () => {
+  return new Promise((resolve) => {
+    const scriptPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'scripts', 'install-native-suppression.ps1')
+      : path.join(__dirname, 'scripts', 'install-native-suppression.ps1');
+
+    // Launch a new elevated PowerShell that runs the installer script.
+    // Start-Process -Verb RunAs triggers the UAC prompt.
+    const psArgs = [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-Command',
+      `Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \\"${scriptPath}\\"'`
+    ];
+
+    require('child_process').spawn('powershell.exe', psArgs, {
+      detached: true,
+      stdio:    'ignore',
+      windowsHide: false,
+    }).unref();
+
+    resolve({ ok: true });
+  });
+});
+
 function createWindow(url) {
   win = new BrowserWindow({
     width: 1280,
@@ -24,8 +50,8 @@ function createWindow(url) {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
-    // Remove default menu bar
     autoHideMenuBar: true,
   });
 
@@ -43,9 +69,7 @@ function createWindow(url) {
       const { desktopCapturer } = require('electron');
       desktopCapturer.getSources({ types: ['screen', 'window'] }).then(sources => {
         if (!sources.length) { callback({}); return; }
-        // Prefer a full screen over a window when available.
         const screenSrc = sources.find(s => s.id.startsWith('screen:')) || sources[0];
-        // Only attach system audio (Windows loopback) if the renderer actually asked for it.
         const wantsAudio = req && req.audioRequested;
         callback(wantsAudio ? { video: screenSrc, audio: 'loopback' } : { video: screenSrc });
       }).catch(err => { console.error('desktopCapturer failed:', err); callback({}); });
@@ -59,7 +83,6 @@ function createWindow(url) {
   });
 
   win.on('close', (e) => {
-    // Minimise to tray instead of quitting
     e.preventDefault();
     win.hide();
   });
@@ -68,7 +91,6 @@ function createWindow(url) {
 }
 
 function createTray() {
-  // Use the app icon; fall back to a blank icon if it can't be loaded
   let icon = nativeImage.createFromPath(path.join(__dirname, 'public', 'icon.ico'));
   if (icon.isEmpty()) icon = nativeImage.createEmpty();
   tray = new Tray(icon);
@@ -85,7 +107,6 @@ function appUrl() {
   return RESCORD_URL || LOCAL_URL;
 }
 
-// Wait for local server to be ready before opening window
 function waitForServer(url, retries, cb) {
   http.get(url + '/health', (res) => {
     if (res.statusCode === 200) cb();
@@ -93,7 +114,7 @@ function waitForServer(url, retries, cb) {
   }).on('error', retry);
 
   function retry() {
-    if (retries <= 0) { cb(); return; } // give up, open anyway
+    if (retries <= 0) { cb(); return; }
     setTimeout(() => waitForServer(url, retries - 1, cb), 500);
   }
 }
@@ -102,10 +123,8 @@ app.whenReady().then(() => {
   createTray();
 
   if (RESCORD_URL) {
-    // Cloud mode — just open the deployed URL
     createWindow(RESCORD_URL);
   } else {
-    // Local mode — start the bundled server then open
     try {
       serverProcess = require('child_process').fork(
         path.join(__dirname, 'server.js'),
@@ -117,7 +136,6 @@ app.whenReady().then(() => {
     } catch (e) {
       console.error('Could not start server:', e);
     }
-    // Wait up to 5s for server, then open
     waitForServer(LOCAL_URL, 10, () => createWindow(LOCAL_URL));
   }
 });
@@ -131,7 +149,6 @@ app.on('before-quit', () => {
   if (serverProcess) serverProcess.kill();
 });
 
-// Prevent default quit — we handle it via tray
-app.on('window-all-closed', (e) => {
-  // Do not quit on all windows closed (stay in tray)
+app.on('window-all-closed', () => {
+  // Stay in tray
 });

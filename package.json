@@ -33,8 +33,10 @@
     },
     "files": [
       "electron.js",
+      "preload.js",
       "server.js",
       "public/**/*",
+      "scripts/install-native-suppression.ps1",
       "node_modules/**/*",
       "package.json"
     ],

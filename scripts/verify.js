@@ -40,7 +40,7 @@ function checkSyntax(label, code) {
 
 // ---- 1. JS syntax ----------------------------------------------------------
 head('JS syntax');
-for (const f of ['electron.js', 'server.js']) {
+for (const f of ['electron.js', 'preload.js', 'server.js']) {
   if (exists(f)) checkSyntax(f, read(f)); else err(`missing file: ${f}`);
 }
 
@@ -85,7 +85,8 @@ if (html) {
     'toggleRNNoise', 'toggleNoiseSup', 'toggleEchoCancel', 'toggleAutoGain',
     'toggleMicTest', 'stopMicTest', 'copyEl', 'onAvatarPicked',
     'removeAvatar', 'saveDisplayName', 'toggleSounds', 'applyInputDevice',
-    'applyOutputDevice', 'submitNewText', 'submitNewVoice'
+    'applyOutputDevice', 'submitNewText', 'submitNewVoice',
+    'initNativeSupTab', 'nativeSupConfirm1', 'nativeSupConfirm2', 'nativeSupCancel'
   ];
   const missing = requiredFns.filter(fn => !new RegExp('function\\s+' + fn + '\\s*\\(|' + fn + '\\s*=\\s*(?:async\\s*)?(?:function|\\()').test(script));
   if (missing.length) missing.forEach(fn => err('missing function: ' + fn + '()'));
@@ -97,7 +98,9 @@ if (html) {
     'musicThumb', 'musicSub', 'ytPlayer', 'ytPlayerWrap',
     'audioShareBtn', 'shareBtn', 'voiceView', 'chatView',
     'voiceParticipants', 'screenGrid', 'voiceChannelTitle',
-    'nicknameModal', 'nicknameInput', 'settingsModal', 'kickedBanner'
+    'nicknameModal', 'nicknameInput', 'settingsModal', 'kickedBanner',
+    'section-native-sup', 'nativeSupElectronOnly', 'nativeSupBrowserOnly',
+    'nativeSupStatus', 'nativeSupStep1', 'nativeSupStep2', 'nativeSupRunning'
   ];
   requiredIds.forEach(id => {
     if (html.includes('id="' + id + '"')) ok('element present: #' + id);
@@ -155,7 +158,9 @@ for (const a of [
   'public/dfnet/DeepFilterNet3_onnx.tar.gz',
   'public/dfnet/dfnet3-worklet.js',
   'public/icon.ico', 'public/icon-192.png', 'public/icon-512.png',
-  'public/rnnoise-sync.js'
+  'public/rnnoise-sync.js',
+  'preload.js',
+  'scripts/install-native-suppression.ps1'
 ]) { exists(a) ? ok(`present: ${a}`) : err(`missing asset: ${a}`); }
 
 // ---- 4. DeepFilterNet3 asset integrity ------------------------------------
