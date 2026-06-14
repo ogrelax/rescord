@@ -64,11 +64,31 @@ function createWindow(url) {
   if (win.webContents.session.setDisplayMediaRequestHandler) {
     win.webContents.session.setDisplayMediaRequestHandler((req, callback) => {
       const { desktopCapturer } = require('electron');
-      desktopCapturer.getSources({ types: ['screen', 'window'] }).then(sources => {
+      desktopCapturer.getSources({
+        types: ['screen', 'window'],
+        thumbnailSize: { width: 320, height: 180 }
+      }).then(async sources => {
         if (!sources.length) { callback({}); return; }
-        const screenSrc = sources.find(s => s.id.startsWith('screen:')) || sources[0];
         const wantsAudio = req && req.audioRequested;
-        callback(wantsAudio ? { video: screenSrc, audio: 'loopback' } : { video: screenSrc });
+        // Ask the renderer to show a picker so the user can choose a screen OR a window.
+        const list = sources.map(s => ({
+          id: s.id,
+          name: s.name,
+          isScreen: s.id.startsWith('screen:'),
+          thumbnail: s.thumbnail.toDataURL()
+        }));
+        let chosenId;
+        try {
+          chosenId = await new Promise((resolve) => {
+            ipcMain.once('pick-source-result', (_e, id) => resolve(id));
+            win.webContents.send('pick-source', list);
+            setTimeout(() => resolve('__cancel__'), 120000); // safety: never hang
+          });
+        } catch (e) { chosenId = '__cancel__'; }
+        if (chosenId === '__cancel__' || chosenId == null) { callback({}); return; } // cancelled
+        const chosen = sources.find(s => s.id === chosenId)
+          || sources.find(s => s.id.startsWith('screen:')) || sources[0];
+        callback(wantsAudio ? { video: chosen, audio: 'loopback' } : { video: chosen });
       }).catch(err => { console.error('desktopCapturer failed:', err); callback({}); });
     });
   }

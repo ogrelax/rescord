@@ -124,6 +124,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* Main */
 #main{flex:1;display:flex;flex-direction:column;min-width:0}
 #channelHeader{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:8px;font-weight:700;flex-shrink:0}
+.hdr-toggle{background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;line-height:1}
+.hdr-toggle:hover{background:var(--bg-active,rgba(255,255,255,.08));color:var(--text-primary)}
+.hdr-toggle.active{color:var(--text-primary)}
+body.members-hidden #memberSidebar{display:none}
+body.channels-collapsed #channelSidebar{width:0;min-width:0;padding:0;border:none}
 .header-prefix{color:var(--text-muted);font-size:22px}
 #messages{flex:1;overflow-y:auto;padding:16px 16px 0;display:flex;flex-direction:column}
 .msg-group{display:flex;gap:16px;padding:4px 8px;border-radius:4px}
@@ -552,8 +557,11 @@ html[data-theme="light"]{
 <!-- Main -->
 <div id="main">
   <div id="channelHeader">
+    <button class="hdr-toggle" id="channelToggle" onclick="toggleChannelSidebar()" title="Show/hide channels">&#9776;</button>
     <span class="header-prefix" id="headerPrefix">#</span>
     <span id="headerName">general</span>
+    <span style="flex:1"></span>
+    <button class="hdr-toggle" id="memberToggle" onclick="toggleMemberSidebar()" title="Show/hide members">&#128101;</button>
   </div>
   <div id="chatView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
     <div id="messages"></div>
@@ -679,7 +687,7 @@ const audioSettings = {
 const mutedUsers = new Set(), userVolumes = {};
 
 // Mic test
-let testStream = null, testCtx = null, testMeterFrame = null;
+let testMonitorEl = null, testActive = false, testBuiltPipeline = false;
 
 // ---- DeepFilterNet3 ----
 async function loadDFNet3Assets() {
@@ -1323,45 +1331,39 @@ function updateDenoiseStatus(state) {
 
 // ---- Mic test ----
 async function toggleMicTest() {
-  if (testStream) { stopMicTest(); return; }
+  if (testActive) { stopMicTest(); return; }
   var btn = document.getElementById('micTestBtn');
   var status = document.getElementById('micTestStatus');
   try {
-    var constraints = { audio: {
-      deviceId: audioSettings.inputDeviceId !== 'default' ? { exact: audioSettings.inputDeviceId } : undefined,
-      noiseSuppression: audioSettings.noiseSuppression,
-      echoCancellation: audioSettings.echoCancellation
-    }};
-    testStream = await navigator.mediaDevices.getUserMedia(constraints);
-    testCtx = new (window.AudioContext || window.webkitAudioContext)();
-    var source   = testCtx.createMediaStreamSource(testStream);
-    var gain     = testCtx.createGain(); gain.gain.value = 0.7;
-    var analyser = testCtx.createAnalyser(); analyser.fftSize = 256;
-    source.connect(analyser);
-    source.connect(gain);
-    gain.connect(testCtx.destination);
-    var data = new Uint8Array(analyser.frequencyBinCount);
-    var meter = function() {
-      analyser.getByteFrequencyData(data);
-      var sum = 0; for (var i = 0; i < data.length; i++) sum += data[i];
-      var level = Math.min(sum / data.length / 60, 1);
-      var fill = document.getElementById('micMeterFill');
-      if (fill) {
-        fill.style.width = (level * 100) + '%';
-        fill.style.background = level > 0.8 ? 'var(--red)' : level > 0.5 ? 'var(--yellow)' : 'var(--green)';
-      }
-      testMeterFrame = requestAnimationFrame(meter);
-    };
-    meter();
+    // Monitor the SAME fully-processed audio peers hear, so every setting (AI NS,
+    // mic sensitivity, suppression strength, echo/AGC) actually affects playback.
+    var monitorStream;
+    if (currentVoice && localStream) {
+      monitorStream = localStream;           // already in a call → exactly what peers receive
+      testBuiltPipeline = false;
+    } else {
+      monitorStream = await getProcessedStream(); // build the real denoise+gain pipeline
+      testBuiltPipeline = true;                   // (also starts the mic meter via startLocalVAD)
+    }
+    testMonitorEl = new Audio();
+    testMonitorEl.srcObject = monitorStream;
+    testMonitorEl.play().catch(function(){});
+    testActive = true;
     btn.textContent = '⏹ Stop Test'; btn.style.background = 'var(--red)'; btn.style.color = '#fff';
-    status.textContent = 'Speak — you should hear yourself back.';
-  } catch(e) { status.textContent = 'Mic error: ' + e.message; }
+    status.textContent = 'Speak — you should hear yourself back. Changed a setting? Toggle test off/on to re-apply.';
+  } catch(e) { if (status) status.textContent = 'Mic error: ' + (e && e.message || e); }
 }
 
 function stopMicTest() {
-  if (testMeterFrame) { cancelAnimationFrame(testMeterFrame); testMeterFrame = null; }
-  if (testStream) { testStream.getTracks().forEach(function(t) { t.stop(); }); testStream = null; }
-  if (testCtx)   { testCtx.close(); testCtx = null; }
+  testActive = false;
+  if (testMonitorEl) { try { testMonitorEl.pause(); testMonitorEl.srcObject = null; } catch(e){} testMonitorEl = null; }
+  if (testBuiltPipeline) {
+    // Tear down the standalone pipeline we built just for the test so the mic closes.
+    testBuiltPipeline = false;
+    if (rawStream) { rawStream.getTracks().forEach(function(t) { t.stop(); }); rawStream = null; }
+    if (audioCtx)  { try { audioCtx.close(); } catch(e){} audioCtx = null; }
+    stopLocalVAD();
+  }
   var btn = document.getElementById('micTestBtn');
   if (btn) { btn.textContent = '🎤 Test Mic (hear yourself)'; btn.style.background = ''; btn.style.color = ''; }
   var status = document.getElementById('micTestStatus');
@@ -1789,6 +1791,58 @@ function esc(s) {
 }
 
 // ---- Screen Share ----
+// ---- Electron screen/window source picker ----
+if (window.electronAPI && window.electronAPI.onPickSource) {
+  window.electronAPI.onPickSource(function(sources){ showSourcePicker(sources); });
+}
+function showSourcePicker(sources) {
+  var old = document.getElementById('sourcePickerOverlay');
+  if (old) old.remove();
+  function done(id){ var o=document.getElementById('sourcePickerOverlay'); if(o)o.remove(); window.electronAPI.pickSourceResult(id); }
+  var ov = document.createElement('div');
+  ov.id = 'sourcePickerOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center';
+  ov.onclick = function(e){ if (e.target === ov) done('__cancel__'); };
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--bg-secondary,#2b2d31);border-radius:10px;padding:20px;max-width:860px;width:90%;max-height:82vh;overflow:auto;box-shadow:0 12px 48px rgba(0,0,0,.55)';
+  var title = document.createElement('div');
+  title.textContent = 'Choose what to share';
+  title.style.cssText = 'font-weight:700;font-size:18px;margin-bottom:6px;color:var(--text-primary,#fff)';
+  box.appendChild(title);
+  function section(label, items){
+    if (!items.length) return;
+    var h = document.createElement('div'); h.textContent = label;
+    h.style.cssText = 'font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted,#949ba4);margin:14px 0 8px';
+    box.appendChild(h);
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px';
+    items.forEach(function(s){
+      var card = document.createElement('div');
+      card.style.cssText = 'cursor:pointer;border:2px solid transparent;border-radius:8px;padding:6px;background:var(--bg-tertiary,#1e1f22)';
+      card.onmouseover = function(){ card.style.borderColor = 'var(--accent,#5865f2)'; };
+      card.onmouseout  = function(){ card.style.borderColor = 'transparent'; };
+      card.onclick = function(){ done(s.id); };
+      var img = document.createElement('img');
+      img.src = s.thumbnail;
+      img.style.cssText = 'width:100%;height:112px;object-fit:cover;border-radius:4px;background:#000;display:block';
+      var nm = document.createElement('div');
+      nm.textContent = s.name; nm.title = s.name;
+      nm.style.cssText = 'font-size:12px;color:var(--text-primary,#fff);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+      card.appendChild(img); card.appendChild(nm); grid.appendChild(card);
+    });
+    box.appendChild(grid);
+  }
+  section('Screens', sources.filter(function(s){ return s.isScreen; }));
+  section('Windows', sources.filter(function(s){ return !s.isScreen; }));
+  var cancel = document.createElement('button');
+  cancel.textContent = 'Cancel';
+  cancel.style.cssText = 'margin-top:18px;padding:8px 18px;border:none;border-radius:6px;background:var(--bg-tertiary,#1e1f22);color:var(--text-primary,#fff);cursor:pointer';
+  cancel.onclick = function(){ done('__cancel__'); };
+  box.appendChild(cancel);
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+}
+
 async function toggleScreenShare() {
   if (isSharingScreen) { stopScreenShare(); return; }
   try {
@@ -2194,6 +2248,21 @@ function closeDmPanel(e) {
   document.getElementById('dmPanel').classList.remove('open');
   dmOpen = false;
 }
+
+function toggleChannelSidebar() {
+  document.body.classList.toggle('channels-collapsed');
+  try { localStorage.setItem('rescord_channels_collapsed', document.body.classList.contains('channels-collapsed') ? '1' : '0'); } catch(e) {}
+}
+function toggleMemberSidebar() {
+  document.body.classList.toggle('members-hidden');
+  try { localStorage.setItem('rescord_members_hidden', document.body.classList.contains('members-hidden') ? '1' : '0'); } catch(e) {}
+}
+(function restoreLayoutPrefs() {
+  try {
+    if (localStorage.getItem('rescord_channels_collapsed') === '1') document.body.classList.add('channels-collapsed');
+    if (localStorage.getItem('rescord_members_hidden') === '1') document.body.classList.add('members-hidden');
+  } catch(e) {}
+})();
 
 function toggleDmPanel() {
   if (dmOpen) {
