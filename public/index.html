@@ -1094,6 +1094,7 @@ async function _buildAudioPipeline(stream) {
       var workletSrc = syncSrc + '\n' +
 'const FRAME_SIZE = 480;\n' +
 'let rnn = null, denoiseState = null, inPtr = 0, outPtr = 0;\n' +
+'let initError = null;\n' + // worklet console.* is invisible to the page; ship the reason out via postMessage
 'const inputBuf = [], outputBuf = [];\n' +
 'try {\n' +
 '  const _mod = createRNNWasmModuleSync({});\n' +
@@ -1102,15 +1103,17 @@ async function _buildAudioPipeline(stream) {
 '    denoiseState = rnn._rnnoise_create(0);\n' +
 '    inPtr  = rnn._malloc(FRAME_SIZE * 4);\n' +
 '    outPtr = rnn._malloc(FRAME_SIZE * 4);\n' +
-'  }).catch(e => console.error("[RNNoise] ready failed:", e));\n' +
-'} catch (e) { console.error("[RNNoise] factory failed:", e); }\n' +
+'    if (!denoiseState) initError = "rnnoise_create returned 0 (heap/malloc failed)";\n' +
+'    else if (!inPtr || !outPtr) initError = "malloc returned 0 (out of wasm heap)";\n' +
+'  }).catch(e => { initError = "ready: " + ((e && e.message) || e); });\n' +
+'} catch (e) { initError = "factory: " + ((e && e.message) || e); }\n' +
 'class RNNoiseProcessor extends AudioWorkletProcessor {\n' +
 '  constructor() {\n' +
 '    super();\n' +
 '    this._bypass = false;\n' +
 '    this.port.onmessage = ({ data }) => {\n' +
 '      if (data.type === "bypass") this._bypass = data.value;\n' +
-'      if (data.type === "ready?") this.port.postMessage({ type: "ready", ok: !!(rnn && denoiseState) });\n' +
+'      if (data.type === "ready?") this.port.postMessage({ type: "ready", ok: !!(rnn && denoiseState), error: initError });\n' +
 '    };\n' +
 '  }\n' +
 '  process(inputs, outputs) {\n' +
@@ -1141,6 +1144,7 @@ async function _buildAudioPipeline(stream) {
       var rnnoiseReady = false;
       rnnoiseNode.port.onmessage = function(ev) {
         if (ev.data.type === 'ready' && ev.data.ok) { rnnoiseReady = true; updateDenoiseStatus('rnnoise'); }
+        else if (ev.data.type === 'ready' && ev.data.error) { window.__rnnoiseError = ev.data.error; }
       };
       updateDenoiseStatus('loading-rnnoise');
       var rnnoiseRetries = 0;
@@ -1148,7 +1152,15 @@ async function _buildAudioPipeline(stream) {
         if (!rnnoiseNode || rnnoiseReady) return;
         rnnoiseNode.port.postMessage({ type: 'ready?' });
         if (++rnnoiseRetries < 20) setTimeout(pollReady, 500);
-        else updateDenoiseStatus('unavailable');
+        else {
+          updateDenoiseStatus('unavailable');
+          console.error('[denoise] BOTH denoisers unavailable → passthrough (no NS).',
+            '\n  DeepFilterNet3:', window.__dfnetError || '(no error reported — check if it ever posted DF_STATUS)',
+            '\n  RNNoise:', window.__rnnoiseError || '(no init error reported — worklet may not have loaded)',
+            '\n  context sampleRate:', audioCtx && audioCtx.sampleRate);
+          var el = document.getElementById('rnnoiseStatus');
+          if (el) el.title = 'DFNet3: ' + (window.__dfnetError || 'n/a') + ' | RNNoise: ' + (window.__rnnoiseError || 'n/a');
+        }
       };
       setTimeout(pollReady, 200);
       source.connect(rnnoiseNode);
@@ -1593,17 +1605,19 @@ function nativeSupConfirm2() {
 
   window.electronAPI.installNativeSuppression()
     .then(function(res) {
+      document.getElementById('nativeSupRunning').style.display = 'none';
       if (res && res.ok) {
         document.getElementById('nativeSupStatus').textContent =
-          'Installer launched! Watch the PowerShell window for progress. Reboot after it finishes.';
+          '\u2705 Done! Reboot your PC to activate Equalizer APO + noise suppression VST.';
+        document.getElementById('nativeSupStep1').style.display = 'none';
       } else {
-        document.getElementById('nativeSupStatus').textContent = 'Installer may have failed. Check for errors.';
-        document.getElementById('nativeSupRunning').style.display = 'none';
-        document.getElementById('nativeSupStep1').style.display   = 'block';
+        var errMsg = (res && res.error) ? res.error : 'Unknown error';
+        document.getElementById('nativeSupStatus').textContent = '\u274c Failed: ' + errMsg;
+        document.getElementById('nativeSupStep1').style.display = 'block';
       }
     })
     .catch(function(err) {
-      document.getElementById('nativeSupStatus').textContent = 'Error: ' + (err.message || err);
+      document.getElementById('nativeSupStatus').textContent = '\u274c Error: ' + (err.message || err);
       document.getElementById('nativeSupRunning').style.display = 'none';
       document.getElementById('nativeSupStep1').style.display   = 'block';
     });

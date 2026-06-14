@@ -6,7 +6,6 @@ let win = null;
 let tray = null;
 let serverProcess = null;
 
-// The URL to load — Railway URL in production, localhost in dev
 const CLOUD_URL   = 'https://content-balance-production-cd65.up.railway.app';
 const RESCORD_URL = process.env.RESCORD_URL || (app.isPackaged ? CLOUD_URL : null);
 const LOCAL_PORT  = process.env.PORT || 3000;
@@ -19,14 +18,22 @@ ipcMain.handle('install-native-suppression', () => {
       ? path.join(process.resourcesPath, 'scripts', 'install-native-suppression.ps1')
       : path.join(__dirname, 'scripts', 'install-native-suppression.ps1');
 
-    // Spawn an elevated PowerShell window via Start-Process -Verb RunAs (triggers UAC).
-    const escaped = scriptPath.replace(/"/g, '""');
-    require('child_process').spawn('powershell.exe', [
-      '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
-      `Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "${escaped}"'`
-    ], { detached: true, stdio: 'ignore', windowsHide: false }).unref();
+    if (!require('fs').existsSync(scriptPath)) {
+      return resolve({ ok: false, error: 'Script not found: ' + scriptPath });
+    }
 
-    resolve({ ok: true });
+    // Array-style ArgumentList avoids quoting issues with paths containing spaces.
+    // -Wait means exec won't return until the elevated PS window closes.
+    const ps1 = scriptPath.replace(/'/g, "''");
+    const command = `powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -Verb RunAs -Wait -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File','${ps1}')"`;
+
+    require('child_process').exec(command, { windowsHide: false }, (err) => {
+      if (err && err.code !== 0) {
+        resolve({ ok: false, error: err.message });
+      } else {
+        resolve({ ok: true });
+      }
+    });
   });
 });
 
@@ -49,13 +56,11 @@ function createWindow(url) {
 
   win.loadURL(url);
 
-  // Grant mic, camera, screen capture permissions automatically
   win.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
     const allowed = ['media', 'display-capture', 'screen', 'camera', 'microphone', 'audioCapture', 'videoCapture'];
     callback(allowed.includes(permission));
   });
 
-  // Electron 17+: handle getDisplayMedia() picker. Auto-grant the primary screen.
   if (win.webContents.session.setDisplayMediaRequestHandler) {
     win.webContents.session.setDisplayMediaRequestHandler((req, callback) => {
       const { desktopCapturer } = require('electron');
@@ -68,7 +73,6 @@ function createWindow(url) {
     });
   }
 
-  // Open external links in the system browser, not Electron
   win.webContents.setWindowOpenHandler(({ url: u }) => {
     shell.openExternal(u);
     return { action: 'deny' };
